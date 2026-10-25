@@ -1,2191 +1,461 @@
 package com.example.demucslite;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.DownloadManager;
-import android.content.Context;
+import android.content.ContentValues;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.text.InputType;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import com.example.demucslite.ui.ProgressOrbitView;
+import com.example.demucslite.ui.WaveformView;
+
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+public class MainActivity extends AppCompatActivity {
+    private enum Screen { HOME, UPLOAD, PROCESSING, MIXER }
+    private StudioSession session;
+    private Screen currentScreen;
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private final ExecutorService exportWorker = Executors.newSingleThreadExecutor();
+    private StudioSession.Stem[] boundStems;
+    private final MediaPlayer[] players = new MediaPlayer[4];
+    private final boolean[] prepared = new boolean[4];
+    private final View[] cards = new View[4];
+    private final int[] colors = {0xFFB5A0FF,0xFFCDF5A2,0xFFFFBD9A,0xFF91CDFF};
+    private boolean playing, seeking, exporting;
+    private int duration, playerGeneration;
+    private AudioManager audioManager;
+    private AudioFocusRequest focusRequest;
+    private final ActivityResultLauncher<String[]> picker = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(), this::onAudioChosen);
+    private final Runnable tick = new Runnable() {
+        @Override public void run() {
+            if(playing && prepared[0] && players[0]!=null) {
+                session.playbackPosition=players[0].getCurrentPosition();
+                if(!seeking) {
+                    ((SeekBar)findViewById(R.id.playbackSeek)).setProgress(session.playbackPosition);
+                    updateTime();
+                }
+                ui.postDelayed(this,120);
+            }
+        }
+    };
 
-public class MainActivity extends Activity {
-
-    private static final int REQUEST_PICK_AUDIO = 1001;
-    private static final int REQUEST_WRITE_STORAGE = 1002;
-
-    /*
-     * Emulator:
-     * 10.0.2.2 = localhost của máy tính đang chạy Android Studio.
-     *
-     * Điện thoại thật:
-     * đổi sang IP LAN của máy chạy server.
-     * Ví dụ:
-     * http://192.168.1.10:8000
-     */
-    private static final String SERVER_BASE_URL =
-            "http://127.0.0.1:8000";
-
-    private static final String SEPARATE_ENDPOINT =
-            SERVER_BASE_URL + "/separate";
-
-    private final OkHttpClient httpClient =
-            new OkHttpClient.Builder()
-                    .retryOnConnectionFailure(true)
-                    .build();
-
-    private Uri selectedAudioUri;
-    private final Handler statusHandler = new Handler(Looper.getMainLooper());
-    private String activeJobId;
-    private String selectedFileName = "song.wav";
-
-    private Button btnChooseFile;
-    private Button btnSeparate;
-
-    private Button btnPlayAll;
-    private Button btnStopAll;
-
-    private TextView tvSelectedFile;
-    private TextView tvStatus;
-
-    private ProgressBar progressBar;
-
-    private TrackUI vocals;
-    private TrackUI drums;
-    private TrackUI bass;
-    private TrackUI other;
-
-    private TrackUI[] tracks;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-
-        super.onCreate(savedInstanceState);
-
+    @Override protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(),false);
         setContentView(R.layout.activity_main);
-
-        bindViews();
-
-        setupActions();
-
-        requestLegacyStoragePermissionIfNeeded();
-    }
-
-    private void bindViews() {
-
-        btnChooseFile =
-                findViewById(R.id.btnChooseFile);
-
-        btnSeparate =
-                findViewById(R.id.btnSeparate);
-
-        btnPlayAll =
-                findViewById(R.id.btnPlayAll);
-
-        btnStopAll =
-                findViewById(R.id.btnStopAll);
-
-        tvSelectedFile =
-                findViewById(R.id.tvSelectedFile);
-
-        tvStatus =
-                findViewById(R.id.tvStatus);
-
-        progressBar =
-                findViewById(R.id.progressBar);
-
-
-        vocals = new TrackUI(
-                "vocals",
-                "Vocals",
-                findViewById(R.id.btnPlayVocals),
-                findViewById(R.id.btnDownloadVocals),
-                findViewById(R.id.sbVocals)
-        );
-
-
-        drums = new TrackUI(
-                "drums",
-                "Drums",
-                findViewById(R.id.btnPlayDrums),
-                findViewById(R.id.btnDownloadDrums),
-                findViewById(R.id.sbDrums)
-        );
-
-
-        bass = new TrackUI(
-                "bass",
-                "Bass",
-                findViewById(R.id.btnPlayBass),
-                findViewById(R.id.btnDownloadBass),
-                findViewById(R.id.sbBass)
-        );
-
-
-        other = new TrackUI(
-                "other",
-                "Other",
-                findViewById(R.id.btnPlayOther),
-                findViewById(R.id.btnDownloadOther),
-                findViewById(R.id.sbOther)
-        );
-
-
-        tracks = new TrackUI[]{
-                vocals,
-                drums,
-                bass,
-                other
-        };
-
-
-        for (TrackUI track : tracks) {
-
-            setupTrackControls(track);
+        WindowCompat.getInsetsController(getWindow(),getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+        WindowCompat.getInsetsController(getWindow(),getWindow().getDecorView()).setAppearanceLightNavigationBars(false);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.appRoot),(v,insets)-> {
+            androidx.core.graphics.Insets bars=insets.getInsets(WindowInsetsCompat.Type.systemBars()|WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;
+        });
+        session=new ViewModelProvider(this).get(StudioSession.class);
+        audioManager=(AudioManager)getSystemService(AUDIO_SERVICE);
+        focusRequest=new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+                .setOnAudioFocusChangeListener(change -> { if(change!=AudioManager.AUDIOFOCUS_GAIN) pause(); }).build();
+        bindActions();
+        Screen initial=Screen.HOME;
+        if(state!=null) {
+            try { initial=Screen.valueOf(state.getString("screen","HOME")); } catch(IllegalArgumentException ignored) { }
+            if(session.selectedUri==null && state.getString("uri")!=null)
+                session.select(Uri.parse(state.getString("uri")),state.getString("name","song.wav"),state.getLong("size",-1));
+            if(initial==Screen.PROCESSING && !session.isBusy()) initial=session.stems!=null?Screen.MIXER:Screen.UPLOAD;
+            if(initial==Screen.MIXER && session.stems==null) initial=Screen.UPLOAD;
         }
-    }
-
-    private void setupActions() {
-
-        btnChooseFile.setOnClickListener(
-                v -> openAudioPicker()
-        );
-
-
-        btnSeparate.setOnClickListener(
-                v -> uploadAndSeparate()
-        );
-
-
-        btnPlayAll.setOnClickListener(
-                v -> playAllTracks()
-        );
-
-
-        btnStopAll.setOnClickListener(
-                v -> stopAllTracks()
-        );
-    }
-
-    private void setupTrackControls(TrackUI track) {
-
-        track.playButton.setOnClickListener(
-                v -> toggleTrack(track)
-        );
-
-
-        track.downloadButton.setOnClickListener(
-                v -> downloadTrack(track)
-        );
-
-
-        track.volumeSeekBar.setMax(100);
-
-        track.volumeSeekBar.setProgress(100);
-
-
-        track.volumeSeekBar.setOnSeekBarChangeListener(
-                new SeekBar.OnSeekBarChangeListener() {
-
-                    @Override
-                    public void onProgressChanged(
-                            SeekBar seekBar,
-                            int progress,
-                            boolean fromUser
-                    ) {
-
-                        float volume =
-                                progress / 100f;
-
-                        track.volume =
-                                volume;
-
-
-                        if (track.player != null) {
-
-                            track.player.setVolume(
-                                    volume,
-                                    volume
-                            );
-                        }
-                    }
-
-                    @Override
-                    public void onStartTrackingTouch(
-                            SeekBar seekBar
-                    ) {
-
-                    }
-
-                    @Override
-                    public void onStopTrackingTouch(
-                            SeekBar seekBar
-                    ) {
-
-                    }
-                }
-        );
-    }
-
-    // ============================
-    // CHỌN FILE
-    // ============================
-
-    private void openAudioPicker() {
-
-        Intent intent =
-                new Intent(
-                        Intent.ACTION_OPEN_DOCUMENT
-                );
-
-        intent.addCategory(
-                Intent.CATEGORY_OPENABLE
-        );
-
-        intent.setType("audio/*");
-
-
-        startActivityForResult(
-                intent,
-                REQUEST_PICK_AUDIO
-        );
-    }
-
-    @Override
-    protected void onActivityResult(
-            int requestCode,
-            int resultCode,
-            Intent data
-    ) {
-
-        super.onActivityResult(
-                requestCode,
-                resultCode,
-                data
-        );
-
-
-        if (requestCode ==
-                REQUEST_PICK_AUDIO
-
-                && resultCode ==
-                RESULT_OK
-
-                && data != null) {
-
-
-            Uri uri =
-                    data.getData();
-
-
-            if (uri == null) {
-
-                return;
-            }
-
-
-            selectedAudioUri =
-                    uri;
-
-
-            selectedFileName =
-                    getDisplayName(uri);
-
-
-            tvSelectedFile.setText(
-                    selectedFileName
-            );
-
-
-            btnSeparate.setEnabled(
-                    true
-            );
-
-
-            tvStatus.setText(
-                    "Audio selected. Ready to upload."
-            );
-        }
-    }
-
-    private String getDisplayName(
-            Uri uri
-    ) {
-
-        String name = null;
-
-        Cursor cursor = null;
-
-
-        try {
-
-            cursor =
-                    getContentResolver()
-                            .query(
-                                    uri,
-                                    new String[]{
-                                            OpenableColumns.DISPLAY_NAME
-                                    },
-                                    null,
-                                    null,
-                                    null
-                            );
-
-
-            if (cursor != null
-                    && cursor.moveToFirst()) {
-
-
-                int index =
-                        cursor.getColumnIndex(
-                                OpenableColumns.DISPLAY_NAME
-                        );
-
-
-                if (index >= 0) {
-
-                    name =
-                            cursor.getString(
-                                    index
-                            );
-                }
-            }
-
-        } finally {
-
-            if (cursor != null) {
-
-                cursor.close();
-            }
-        }
-
-
-        if (name == null
-                || name.trim().isEmpty()) {
-
-            return "song.wav";
-        }
-
-
-        return name;
-    }
-
-
-    // ============================
-    // UPLOAD
-    // ============================
-
-    private void uploadAndSeparate() {
-
-        if (selectedAudioUri == null) {
-
-            toast(
-                    "Choose an audio file first."
-            );
-
-            return;
-        }
-
-
-        resetPreviousResult();
-
-
-        setLoading(
-                true,
-                "Preparing audio file..."
-        );
-
-
-        new Thread(() -> {
-
-            try {
-
-                File uploadFile =
-                        copySelectedUriToCache(
-                                selectedAudioUri,
-                                selectedFileName
-                        );
-
-
-                runOnUiThread(() ->
-
-                        setLoading(
-                                true,
-                                "Uploading song to server..."
-                        )
-                );
-
-
-                callSeparationApi(
-                        uploadFile
-                );
-
-
-            } catch (Exception e) {
-
-                showError(
-                        "Cannot prepare selected file: "
-                                + e.getMessage()
-                );
-            }
-
-        }).start();
-    }
-
-
-    private File copySelectedUriToCache(
-            Uri uri,
-            String displayName
-    ) throws IOException {
-
-
-        File uploadDir =
-                new File(
-                        getCacheDir(),
-                        "uploads"
-                );
-
-
-        if (!uploadDir.exists()
-                && !uploadDir.mkdirs()) {
-
-            throw new IOException(
-                    "Cannot create upload cache folder"
-            );
-        }
-
-
-        String extension =
-                ".wav";
-
-
-        int dot =
-                displayName.lastIndexOf('.');
-
-
-        if (dot >= 0
-                && dot < displayName.length() - 1) {
-
-            extension =
-                    displayName.substring(
-                            dot
-                    );
-        }
-
-
-        File outFile =
-                File.createTempFile(
-                        "input_",
-                        extension,
-                        uploadDir
-                );
-
-
-        try (
-                InputStream input =
-                        getContentResolver()
-                                .openInputStream(uri);
-
-                OutputStream output =
-                        new FileOutputStream(
-                                outFile
-                        )
-        ) {
-
-
-            if (input == null) {
-
-                throw new IOException(
-                        "Cannot open selected audio file"
-                );
-            }
-
-
-            byte[] buffer =
-                    new byte[64 * 1024];
-
-
-            int read;
-
-
-            while (
-                    (read =
-                            input.read(buffer))
-                            != -1
-            ) {
-
-                output.write(
-                        buffer,
-                        0,
-                        read
-                );
-            }
-
-
-            output.flush();
-        }
-
-
-        return outFile;
-    }
-
-
-    // ============================
-    // API
-    // ============================
-
-    private void callSeparationApi(
-            File uploadFile
-    ) {
-
-
-        String mimeType =
-                getContentResolver()
-                        .getType(
-                                selectedAudioUri
-                        );
-
-
-        if (mimeType == null
-                || mimeType
-                .trim()
-                .isEmpty()) {
-
-            mimeType =
-                    "audio/*";
-        }
-
-
-        MediaType mediaType =
-                MediaType.parse(
-                        mimeType
-                );
-
-
-        RequestBody fileBody =
-                RequestBody.create(
-                        uploadFile,
-                        mediaType
-                );
-
-
-        MultipartBody multipartBody =
-                new MultipartBody.Builder()
-
-                        .setType(
-                                MultipartBody.FORM
-                        )
-
-                        .addFormDataPart(
-                                "file",
-                                selectedFileName,
-                                fileBody
-                        )
-
-                        .build();
-
-
-        Request request =
-                new Request.Builder()
-
-                        .url(
-                                SEPARATE_ENDPOINT
-                        )
-
-                        .post(
-                                multipartBody
-                        )
-
-                        .build();
-
-
-        httpClient
-                .newCall(request)
-                .enqueue(
-                        new Callback() {
-
-                            @Override
-                            public void onFailure(
-                                    Call call,
-                                    IOException e
-                            ) {
-
-                                showError(
-                                        "Upload failed: "
-                                                + e.getMessage()
-                                );
-                            }
-
-
-                            @Override
-                            public void onResponse(
-                                    Call call,
-                                    Response response
-                            ) throws IOException {
-
-
-                                try (
-                                        ResponseBody responseBody =
-                                                response.body()
-                                ) {
-
-
-                                    if (!response.isSuccessful()) {
-
-                                        String errorText =
-                                                responseBody != null
-                                                        ? responseBody.string()
-                                                        : "";
-
-
-                                        showError(
-                                                "Server error "
-                                                        + response.code()
-                                                        + ": "
-                                                        + errorText
-                                        );
-
-                                        return;
-                                    }
-
-
-                                    if (responseBody == null) {
-
-                                        showError(
-                                                "Server returned an empty response."
-                                        );
-
-                                        return;
-                                    }
-
-
-                                    String json =
-                                            responseBody.string();
-
-
-                                    runOnUiThread(() -> parseSeparationResponse(json));
-                                }
-                            }
-                        }
-                );
-    }
-
-
-    // ============================
-    // JSON RESPONSE
-    // ============================
-
-    private void pollJobStatus(String jobId) {
-        if (isDestroyed() || !jobId.equals(activeJobId)) return;
-        Request request = new Request.Builder()
-                .url(SERVER_BASE_URL + "/status/" + Uri.encode(jobId))
-                .build();
-        httpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                runOnUiThread(() -> {
-                    if (isDestroyed() || !jobId.equals(activeJobId)) return;
-                    activeJobId = null;
-                    showError("Cannot check separation status: " + e.getMessage());
-                });
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                try (ResponseBody body = response.body()) {
-                    String json = body == null ? "" : body.string();
-                    runOnUiThread(() -> {
-                        if (isDestroyed() || !jobId.equals(activeJobId)) return;
-                        if (!response.isSuccessful()) {
-                            activeJobId = null;
-                            showError("Status error " + response.code() + ": " + json);
-                            return;
-                        }
-                        parseSeparationResponse(json);
-                    });
-                }
+        display(initial,false);
+        session.changes.observe(this,this::render);
+        getOnBackPressedDispatcher().addCallback(this,new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if(currentScreen==Screen.PROCESSING) confirmCancel();
+                else if(currentScreen==Screen.HOME) { setEnabled(false);getOnBackPressedDispatcher().onBackPressed();setEnabled(true); }
+                else { pause();display(Screen.HOME,true); }
             }
         });
     }
 
-    private void parseSeparationResponse(
-            String json
-    ) {
-
-        try {
-
-            if (isDestroyed()) return;
-
-            JSONObject root =
-                    new JSONObject(
-                            json
-                    );
-
-            String status = root.optString("status", "");
-            if ("pending".equals(status) || "processing".equals(status)) {
-                String jobId = root.optString("job_id", activeJobId);
-                if (jobId == null || jobId.isEmpty()) {
-                    showError("Server returned no job_id.");
-                    return;
-                }
-                activeJobId = jobId;
-                setLoading(true, "pending".equals(status)
-                        ? "Waiting for separation..." : "Separating audio. Please wait...");
-                statusHandler.postDelayed(() -> pollJobStatus(jobId), 2000);
-                return;
+    private void bindActions() {
+        findViewById(R.id.btnStart).setOnClickListener(v -> openUpload());
+        findViewById(R.id.btnDemo).setOnClickListener(v -> startJob(true));
+        findViewById(R.id.uploadZone).setOnClickListener(v -> picker.launch(new String[]{"audio/*"}));
+        findViewById(R.id.btnRemoveFile).setOnClickListener(v -> session.select(null,"",-1));
+        findViewById(R.id.btnSeparate).setOnClickListener(v -> startJob(false));
+        findViewById(R.id.btnSettings).setOnClickListener(v -> showSettings());
+        findViewById(R.id.btnBack).setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
+        findViewById(R.id.btnCancel).setOnClickListener(v -> confirmCancel());
+        findViewById(R.id.navHome).setOnClickListener(v -> { pause();display(Screen.HOME,true); });
+        findViewById(R.id.navStudio).setOnClickListener(v -> {
+            if(session.stems!=null) display(Screen.MIXER,true);else openUpload();
+        });
+        findViewById(R.id.btnPlayAll).setOnClickListener(v -> { if(playing) pause();else play(); });
+        findViewById(R.id.btnResetMix).setOnClickListener(v -> {
+            if(boundStems==null) return;
+            for(int i=0;i<4;i++) {
+                StudioSession.Stem stem=boundStems[i];stem.volume=100;stem.muted=false;stem.solo=false;
+                ((SeekBar)cards[i].findViewById(R.id.stemVolume)).setProgress(100);
             }
-            activeJobId = null;
-            if ("failed".equals(status)) {
-                showError("Separation failed: " + root.optString("error", "Unknown server error"));
-                return;
+            applyMix();toast("Đã đặt lại âm lượng của 4 track.");
+        });
+        findViewById(R.id.btnNewSong).setOnClickListener(v -> openUpload());
+        findViewById(R.id.btnExport).setOnClickListener(v -> exportTracks(-1));
+        ((SeekBar)findViewById(R.id.playbackSeek)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar,int value,boolean user) {
+                if(user) { session.playbackPosition=value;updateTime(); }
             }
-            if (!status.isEmpty() && !"done".equals(status)) {
-                showError("Unknown separation status: " + status);
-                return;
+            @Override public void onStartTrackingTouch(SeekBar bar) { seeking=true; }
+            @Override public void onStopTrackingTouch(SeekBar bar) {
+                seeking=false;session.playbackPosition=bar.getProgress();
+                seekPlayers(session.playbackPosition);updateTime();
             }
-
-
-            JSONObject container =
-                    root.optJSONObject(
-                            "result_urls"
-                    );
-
-            if (container == null) {
-                container = root.optJSONObject("tracks");
-            }
-
-
-            if (container == null) {
-
-                container =
-                        root.optJSONObject(
-                                "stems"
-                        );
-            }
-
-
-            if (container == null) {
-
-                container =
-                        root.optJSONObject(
-                                "files"
-                        );
-            }
-
-
-            if (container == null) {
-
-                container =
-                        root;
-            }
-
-
-            vocals.url =
-                    resolveTrackUrl(
-                            root,
-                            container,
-                            "vocals"
-                    );
-
-
-            drums.url =
-                    resolveTrackUrl(
-                            root,
-                            container,
-                            "drums"
-                    );
-
-
-            bass.url =
-                    resolveTrackUrl(
-                            root,
-                            container,
-                            "bass"
-                    );
-
-
-            other.url =
-                    resolveTrackUrl(
-                            root,
-                            container,
-                            "other"
-                    );
-
-
-            for (TrackUI track : tracks) {
-
-                if (track.url == null
-                        || track.url.isEmpty()) {
-
-                    showError(
-                            "Missing URL for track: "
-                                    + track.key
-                                    + "\nResponse: "
-                                    + json
-                    );
-
-                    return;
-                }
-            }
-
-
-            runOnUiThread(() ->
-
-                    setLoading(
-                            true,
-                            "Separation finished. Caching 4 tracks..."
-                    )
-            );
-
-
-            cacheAllTracks();
-
-
-        } catch (JSONException e) {
-
-            showError(
-                    "Invalid JSON returned by server: "
-                            + e.getMessage()
-                            + "\n"
-                            + json
-            );
-        }
-    }
-
-
-    private String resolveTrackUrl(
-            JSONObject root,
-            JSONObject container,
-            String key
-    ) {
-
-
-        String value =
-                container.optString(
-                        key,
-                        ""
-                );
-
-        if (value.isEmpty()) {
-            value = container.optString(key + ".wav", "");
-        }
-
-
-        if (value.isEmpty()) {
-
-            value =
-                    container.optString(
-                            key + "_url",
-                            ""
-                    );
-        }
-
-
-        if (value.isEmpty()) {
-
-            value =
-                    root.optString(
-                            key + "_url",
-                            ""
-                    );
-        }
-
-
-        if (value.isEmpty()) {
-
-            value =
-                    root.optString(
-                            key,
-                            ""
-                    );
-        }
-
-
-        return makeAbsoluteUrl(
-                value
-        );
-    }
-
-
-    private String makeAbsoluteUrl(
-            String value
-    ) {
-
-        if (value == null) {
-
-            return "";
-        }
-
-
-        value =
-                value.trim();
-
-
-        if (value.isEmpty()) {
-
-            return "";
-        }
-
-
-        if (
-                value.startsWith(
-                        "http://"
-                )
-                        ||
-                        value.startsWith(
-                                "https://"
-                        )
-        ) {
-
-            Uri uri = Uri.parse(value);
-            String host = uri.getHost();
-            // Local backend links must use the server address reachable from Android.
-            if ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host)
-                    || "::1".equals(host) || "[::1]".equals(host)) {
-                Uri server = Uri.parse(SERVER_BASE_URL);
-                return uri.buildUpon().scheme(server.getScheme())
-                        .encodedAuthority(server.getEncodedAuthority()).build().toString();
-            }
-            return value;
-        }
-
-
-        if (!value.startsWith("/")) {
-
-            value =
-                    "/" + value;
-        }
-
-
-        return SERVER_BASE_URL
-                + value;
-    }
-
-
-    // ============================
-    // CACHE 4 TRACK
-    // ============================
-
-    private void cacheAllTracks() {
-
-
-        AtomicInteger remaining =
-                new AtomicInteger(
-                        tracks.length
-                );
-
-
-        AtomicInteger succeeded =
-                new AtomicInteger(0);
-
-
-        for (TrackUI track : tracks) {
-
-
-            cacheOneTrack(
-                    track,
-                    success -> {
-
-
-                        if (success) {
-
-                            succeeded
-                                    .incrementAndGet();
-                        }
-
-
-                        int left =
-                                remaining
-                                        .decrementAndGet();
-
-
-                        runOnUiThread(() -> {
-
-
-                            if (success) {
-
-                                track.playButton
-                                        .setEnabled(
-                                                true
-                                        );
-
-                                track.downloadButton
-                                        .setEnabled(
-                                                true
-                                        );
-                            }
-
-
-                            tvStatus.setText(
-                                    String.format(
-                                            Locale.US,
-
-                                            "Caching stems... %d/%d ready",
-
-                                            tracks.length - left,
-
-                                            tracks.length
-                                    )
-                            );
-
-
-                            if (left == 0) {
-
-                                btnChooseFile.setEnabled(true);
-
-                                progressBar.setVisibility(
-                                        View.GONE
-                                );
-
-
-                                btnSeparate.setEnabled(
-                                        true
-                                );
-
-
-                                boolean allReady =
-                                        succeeded.get()
-                                                ==
-                                                tracks.length;
-
-
-                                btnPlayAll.setEnabled(
-                                        allReady
-                                );
-
-
-                                btnStopAll.setEnabled(
-                                        allReady
-                                );
-
-
-                                if (allReady) {
-
-                                    tvStatus.setText(
-                                            "4 tracks ready. You can play, mix volume, or download."
-                                    );
-
-                                } else {
-
-                                    tvStatus.setText(
-                                            "Some tracks could not be cached. Check server URLs/network."
-                                    );
-                                }
-                            }
-                        });
-                    }
-            );
-        }
-    }
-
-
-    private void cacheOneTrack(
-            TrackUI track,
-            CacheCallback callback
-    ) {
-
-
-        File cacheDir =
-                new File(
-                        getCacheDir(),
-                        "separated_stems"
-                );
-
-
-        if (!cacheDir.exists()
-                && !cacheDir.mkdirs()) {
-
-            callback.onDone(false);
-
-            return;
-        }
-
-
-        String urlHash =
-                Integer.toHexString(
-                        track.url.hashCode()
-                );
-
-
-        File outputFile =
-                new File(
-                        cacheDir,
-                        track.key
-                                + "_"
-                                + urlHash
-                                + ".wav"
-                );
-
-
-        if (
-                outputFile.exists()
-                        &&
-                        outputFile.length() > 0
-        ) {
-
-            track.cacheFile =
-                    outputFile;
-
-
-            callback.onDone(
-                    true
-            );
-
-            return;
-        }
-
-
-        File tempFile =
-                new File(
-                        cacheDir,
-                        track.key
-                                + "_"
-                                + urlHash
-                                + ".part"
-                );
-
-
-        Request request =
-                new Request.Builder()
-
-                        .url(
-                                track.url
-                        )
-
-                        .get()
-
-                        .build();
-
-
-        httpClient
-                .newCall(request)
-                .enqueue(
-                        new Callback() {
-
-                            @Override
-                            public void onFailure(
-                                    Call call,
-                                    IOException e
-                            ) {
-
-                                callback.onDone(
-                                        false
-                                );
-                            }
-
-
-                            @Override
-                            public void onResponse(
-                                    Call call,
-                                    Response response
-                            ) throws IOException {
-
-
-                                try (
-                                        ResponseBody body =
-                                                response.body()
-                                ) {
-
-
-                                    if (
-                                            !response.isSuccessful()
-                                                    ||
-                                                    body == null
-                                    ) {
-
-                                        callback.onDone(
-                                                false
-                                        );
-
-                                        return;
-                                    }
-
-
-                                    try (
-                                            InputStream input =
-                                                    body.byteStream();
-
-                                            FileOutputStream output =
-                                                    new FileOutputStream(
-                                                            tempFile
-                                                    )
-                                    ) {
-
-
-                                        byte[] buffer =
-                                                new byte[
-                                                        64 * 1024
-                                                        ];
-
-
-                                        int read;
-
-
-                                        while (
-                                                (read =
-                                                        input.read(
-                                                                buffer
-                                                        ))
-                                                        != -1
-                                        ) {
-
-
-                                            output.write(
-                                                    buffer,
-                                                    0,
-                                                    read
-                                            );
-                                        }
-
-
-                                        output.flush();
-                                    }
-
-
-                                    if (
-                                            outputFile.exists()
-                                    ) {
-
-                                        outputFile.delete();
-                                    }
-
-
-                                    boolean renamed =
-                                            tempFile.renameTo(
-                                                    outputFile
-                                            );
-
-
-                                    if (!renamed) {
-
-                                        copyFile(
-                                                tempFile,
-                                                outputFile
-                                        );
-
-                                        tempFile.delete();
-                                    }
-
-
-                                    track.cacheFile =
-                                            outputFile;
-
-
-                                    callback.onDone(
-
-                                            outputFile.exists()
-                                                    &&
-                                                    outputFile.length()
-                                                            >
-                                                            0
-                                    );
-
-
-                                } catch (
-                                        Exception e
-                                ) {
-
-
-                                    callback.onDone(
-                                            false
-                                    );
-                                }
-                            }
-                        }
-                );
-    }
-
-
-    private void copyFile(
-            File source,
-            File target
-    ) throws IOException {
-
-
-        try (
-                InputStream input =
-                        new java.io.FileInputStream(
-                                source
-                        );
-
-                OutputStream output =
-                        new FileOutputStream(
-                                target
-                        )
-        ) {
-
-
-            byte[] buffer =
-                    new byte[
-                            64 * 1024
-                            ];
-
-
-            int read;
-
-
-            while (
-                    (read =
-                            input.read(
-                                    buffer
-                            ))
-                            != -1
-            ) {
-
-
-                output.write(
-                        buffer,
-                        0,
-                        read
-                );
-            }
-
-
-            output.flush();
-        }
-    }
-
-
-    // ============================
-    // PLAYER
-    // ============================
-
-    private void toggleTrack(
-            TrackUI track
-    ) {
-
-
-        if (
-                track.cacheFile == null
-                        ||
-                        !track.cacheFile.exists()
-        ) {
-
-
-            toast(
-                    track.title
-                            + " is not cached yet."
-            );
-
-            return;
-        }
-
-
-        if (
-                track.player != null
-                        &&
-                        track.player.isPlaying()
-        ) {
-
-
-            track.player.pause();
-
-
-            track.playButton.setText(
-                    "Play"
-            );
-
-
-            return;
-        }
-
-
-        if (track.player != null) {
-
-
-            track.player.start();
-
-
-            track.playButton.setText(
-                    "Pause"
-            );
-
-
-            return;
-        }
-
-
-        prepareAndPlay(
-                track,
-                0
-        );
-    }
-
-
-    private void prepareAndPlay(
-            TrackUI track,
-            int seekToMs
-    ) {
-
-
-        releasePlayer(
-                track
-        );
-
-
-        MediaPlayer player =
-                new MediaPlayer();
-
-
-        track.player =
-                player;
-
-
-        track.playButton.setText(
-                "Loading..."
-        );
-
-
-        track.playButton.setEnabled(
-                false
-        );
-
-
-        try {
-
-
-            player.setDataSource(
-                    track.cacheFile
-                            .getAbsolutePath()
-            );
-
-
-            player.setVolume(
-                    track.volume,
-                    track.volume
-            );
-
-
-            player.setOnPreparedListener(
-                    mp -> {
-
-
-                        if (seekToMs > 0) {
-
-                            mp.seekTo(
-                                    seekToMs
-                            );
-                        }
-
-
-                        mp.start();
-
-
-                        track.playButton
-                                .setEnabled(
-                                        true
-                                );
-
-
-                        track.playButton
-                                .setText(
-                                        "Pause"
-                                );
-                    }
-            );
-
-
-            player.setOnCompletionListener(
-                    mp -> {
-
-
-                        track.playButton
-                                .setText(
-                                        "Play"
-                                );
-
-
-                        mp.seekTo(0);
-                    }
-            );
-
-
-            player.setOnErrorListener(
-                    (mp, what, extra) -> {
-
-
-                        track.playButton
-                                .setEnabled(
-                                        true
-                                );
-
-
-                        track.playButton
-                                .setText(
-                                        "Play"
-                                );
-
-
-                        toast(
-                                "Playback error: "
-                                        + track.title
-                        );
-
-
-                        return true;
-                    }
-            );
-
-
-            player.prepareAsync();
-
-
-        } catch (IOException e) {
-
-
-            track.playButton
-                    .setEnabled(
-                            true
-                    );
-
-
-            track.playButton
-                    .setText(
-                            "Play"
-                    );
-
-
-            releasePlayer(
-                    track
-            );
-
-
-            toast(
-                    "Cannot play "
-                            + track.title
-                            + ": "
-                            + e.getMessage()
-            );
-        }
-    }
-
-
-    // ============================
-    // MIXING
-    // ============================
-
-    private void playAllTracks() {
-
-
-        for (
-                TrackUI track
-                :
-                tracks
-        ) {
-
-
-            if (
-                    track.cacheFile == null
-                            ||
-                            !track.cacheFile.exists()
-            ) {
-
-
-                toast(
-                        "All 4 tracks must be cached first."
-                );
-
-
-                return;
-            }
-        }
-
-
-        for (
-                TrackUI track
-                :
-                tracks
-        ) {
-
-
-            prepareAndPlay(
-                    track,
-                    0
-            );
-        }
-
-
-        tvStatus.setText(
-                "Playing 4 stems. Move each slider to mix volume."
-        );
-    }
-
-
-    private void stopAllTracks() {
-
-
-        for (
-                TrackUI track
-                :
-                tracks
-        ) {
-
-
-            if (track.player != null) {
-
-
-                try {
-
-
-                    track.player.pause();
-
-
-                    track.player.seekTo(
-                            0
-                    );
-
-
-                    track.playButton
-                            .setText(
-                                    "Play"
-                            );
-
-
-                } catch (
-                        IllegalStateException ignored
-                ) {
-
-                }
-            }
-        }
-
-
-        tvStatus.setText(
-                "Playback stopped."
-        );
-    }
-
-
-    // ============================
-    // DOWNLOAD MANAGER
-    // ============================
-
-    private void downloadTrack(
-            TrackUI track
-    ) {
-
-
-        if (
-                track.url == null
-                        ||
-                        track.url.isEmpty()
-        ) {
-
-
-            toast(
-                    "No download URL for "
-                            + track.title
-            );
-
-
-            return;
-        }
-
-
-        if (
-                Build.VERSION.SDK_INT
-                        <= Build.VERSION_CODES.P
-
-                        &&
-
-                        checkSelfPermission(
-                                Manifest.permission
-                                        .WRITE_EXTERNAL_STORAGE
-                        )
-
-                                !=
-                                PackageManager
-                                        .PERMISSION_GRANTED
-        ) {
-
-
-            requestPermissions(
-                    new String[]{
-                            Manifest.permission
-                                    .WRITE_EXTERNAL_STORAGE
-                    },
-
-                    REQUEST_WRITE_STORAGE
-            );
-
-
-            toast(
-                    "Allow storage permission, then tap Download again."
-            );
-
-
-            return;
-        }
-
-
-        String fileName =
-                buildDownloadFileName(
-                        track.key
-                );
-
-
-        Uri uri =
-                Uri.parse(
-                        track.url
-                );
-
-
-        DownloadManager.Request request =
-                new DownloadManager.Request(
-                        uri
-                )
-
-                        .setTitle(
-                                fileName
-                        )
-
-                        .setDescription(
-                                "Downloading separated "
-                                        + track.title
-                                        + " track"
-                        )
-
-                        .setMimeType(
-                                "audio/wav"
-                        )
-
-                        .setNotificationVisibility(
-                                DownloadManager.Request
-                                        .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
-                        )
-
-                        .setAllowedOverMetered(
-                                true
-                        )
-
-                        .setAllowedOverRoaming(
-                                false
-                        )
-
-                        .setDestinationInExternalPublicDir(
-                                Environment
-                                        .DIRECTORY_DOWNLOADS,
-
-                                "MusicSeparator/"
-                                        + fileName
-                        );
-
-
-        DownloadManager manager =
-                (DownloadManager)
-                        getSystemService(
-                                Context.DOWNLOAD_SERVICE
-                        );
-
-
-        if (manager == null) {
-
-
-            toast(
-                    "DownloadManager is not available."
-            );
-
-
-            return;
-        }
-
-
-        long id =
-                manager.enqueue(
-                        request
-                );
-
-
-        toast(
-                "Download started: "
-                        + track.title
-                        + " (#"
-                        + id
-                        + ")"
-        );
-    }
-
-
-    private String buildDownloadFileName(
-            String stem
-    ) {
-
-
-        String base =
-                selectedFileName;
-
-
-        int dot =
-                base.lastIndexOf('.');
-
-
-        if (dot > 0) {
-
-            base =
-                    base.substring(
-                            0,
-                            dot
-                    );
-        }
-
-
-        base =
-                base.replaceAll(
-                        "[^a-zA-Z0-9._-]",
-                        "_"
-                );
-
-
-        return base
-                + "_"
-                + stem
-                + ".wav";
-    }
-
-
-    // ============================
-    // RESET
-    // ============================
-
-    private void resetPreviousResult() {
-
-
-        btnPlayAll.setEnabled(
-                false
-        );
-
-
-        btnStopAll.setEnabled(
-                false
-        );
-
-
-        for (
-                TrackUI track
-                :
-                tracks
-        ) {
-
-
-            releasePlayer(
-                    track
-            );
-
-
-            track.url =
-                    null;
-
-
-            track.cacheFile =
-                    null;
-
-
-            track.playButton
-                    .setEnabled(
-                            false
-                    );
-
-
-            track.playButton
-                    .setText(
-                            "Play"
-                    );
-
-
-            track.downloadButton
-                    .setEnabled(
-                            false
-                    );
-        }
-    }
-
-
-    private void releasePlayer(
-            TrackUI track
-    ) {
-
-
-        if (track.player != null) {
-
-
-            try {
-
-                track.player.stop();
-
-            } catch (
-                    Exception ignored
-            ) {
-
-            }
-
-
-            try {
-
-                track.player.release();
-
-            } catch (
-                    Exception ignored
-            ) {
-
-            }
-
-
-            track.player =
-                    null;
-        }
-    }
-
-
-    // ============================
-    // UI UTIL
-    // ============================
-
-    private void setLoading(
-            boolean loading,
-            String message
-    ) {
-
-        btnChooseFile.setEnabled(!loading);
-
-
-        progressBar.setVisibility(
-                loading
-                        ?
-                        View.VISIBLE
-                        :
-                        View.GONE
-        );
-
-
-        btnSeparate.setEnabled(
-                !loading
-                        &&
-                        selectedAudioUri != null
-        );
-
-
-        tvStatus.setText(
-                message
-        );
-    }
-
-
-    private void showError(
-            String message
-    ) {
-
-
-        runOnUiThread(() -> {
-
-
-            progressBar.setVisibility(
-                    View.GONE
-            );
-
-            btnChooseFile.setEnabled(true);
-
-
-            btnSeparate.setEnabled(
-                    selectedAudioUri != null
-            );
-
-
-            tvStatus.setText(
-                    message
-            );
-
-
-            Toast.makeText(
-                    MainActivity.this,
-                    message,
-                    Toast.LENGTH_LONG
-            ).show();
         });
     }
 
-
-    private void toast(
-            String message
-    ) {
-
-
-        runOnUiThread(() ->
-
-
-                Toast.makeText(
-                        MainActivity.this,
-                        message,
-                        Toast.LENGTH_SHORT
-                ).show()
-        );
+    private void openUpload() { pause();session.clearError();display(Screen.UPLOAD,true); }
+    private void startJob(boolean demo) {
+        releasePlayers();boundStems=null;session.playbackPosition=0;session.start(demo);
+    }
+    private void onAudioChosen(Uri uri) {
+        if(uri==null) return;
+        try {
+            getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch(SecurityException ignored) { }
+        String name="song.wav";long size=-1;
+        try(Cursor cursor=getContentResolver().query(uri,new String[]{OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE},null,null,null)) {
+            if(cursor!=null && cursor.moveToFirst()) {
+                int ni=cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME),si=cursor.getColumnIndex(OpenableColumns.SIZE);
+                if(ni>=0&&!cursor.isNull(ni)) name=cursor.getString(ni);
+                if(si>=0&&!cursor.isNull(si)) size=cursor.getLong(si);
+            }
+        } catch(Exception e) { toast("Không đọc được file. Hãy chọn lại.");return; }
+        String lower=name.toLowerCase(Locale.ROOT);
+        if(!(lower.endsWith(".mp3")||lower.endsWith(".wav")||lower.endsWith(".flac")||lower.endsWith(".m4a"))) {
+            toast("Hỗ trợ MP3, WAV, FLAC và M4A.");return;
+        }
+        if(size>StudioSession.MAX_BYTES) { toast("Hãy chọn file không quá 50 MB.");return; }
+        if(size==0) { toast("File này đang trống.");return; }
+        session.select(uri,name,size);
+        display(Screen.UPLOAD,true);
     }
 
-
-    // ============================
-    // STORAGE PERMISSION
-    // ============================
-
-    private void requestLegacyStoragePermissionIfNeeded() {
-
-
-        if (
-                Build.VERSION.SDK_INT
-                        <= Build.VERSION_CODES.P
-
-                        &&
-
-                        checkSelfPermission(
-                                Manifest.permission
-                                        .WRITE_EXTERNAL_STORAGE
-                        )
-
-                                !=
-
-                                PackageManager
-                                        .PERMISSION_GRANTED
-        ) {
-
-
-            requestPermissions(
-                    new String[]{
-                            Manifest.permission
-                                    .WRITE_EXTERNAL_STORAGE
-                    },
-
-                    REQUEST_WRITE_STORAGE
-            );
+    private void render(StudioSession state) {
+        boolean selected=state.selectedUri!=null;
+        findViewById(R.id.selectedFileCard).setVisibility(selected?View.VISIBLE:View.GONE);
+        text(R.id.selectedFileName,state.fileName);
+        String ext=state.fileName.contains(".")?state.fileName.substring(state.fileName.lastIndexOf('.')+1).toUpperCase(Locale.ROOT):"AUDIO";
+        text(R.id.selectedFileMeta,ext+" · "+(state.fileSize<0?"Sẵn sàng":String.format(Locale.ROOT,"%.1f MB",state.fileSize/1048576.0)));
+        text(R.id.uploadPrompt,selected?"Chọn một bài hát khác":"Chạm để chọn nhạc");
+        findViewById(R.id.btnSeparate).setEnabled(selected&&!state.isBusy());
+        findViewById(R.id.uploadError).setVisibility(state.error.isEmpty()?View.GONE:View.VISIBLE);
+        text(R.id.uploadError,state.error);
+        if(state.isBusy()) {
+            display(Screen.PROCESSING,true);
+            ((ProgressOrbitView)findViewById(R.id.progressOrbit)).setProgress(state.progress);
+            text(R.id.processingFile,state.resultName);
+            text(R.id.processingDescription,state.demo?"Đang tạo âm thanh để bạn thử bàn phối.":getString(R.string.processing_description));
+            text(R.id.stepSubtitle0,state.demo?"Chuẩn bị âm thanh mẫu":"Đưa âm thanh vào studio");
+            text(R.id.stepSubtitle1,state.demo?"Tạo trực tiếp, không cần máy chủ":"Nhận diện giọng hát và nhạc cụ");
+            text(R.id.stepSubtitle2,state.demo?"Giai điệu, trống, bass và hợp âm":"Tải 4 track về thiết bị");
+            text(R.id.processingStatus,state.message);
+            text(R.id.progressValue,state.progress>=0?state.progress+"%":state.phase==StudioSession.Phase.SEPARATING?"AI":"•••");
+            String label=state.demo?"TẠO DEMO":state.phase==StudioSession.Phase.UPLOADING?"TẢI NHẠC LÊN":
+                    state.phase==StudioSession.Phase.SEPARATING?"ĐANG TÁCH ÂM":state.phase==StudioSession.Phase.CACHING?"TẢI KẾT QUẢ":
+                            state.phase==StudioSession.Phase.QUEUED?"ĐANG CHỜ":"CHUẨN BỊ";
+            text(R.id.progressLabel,label);
+            text(R.id.processingHint,state.demo?"Bản demo được tạo trên thiết bị.\nĐây là âm thanh tổng hợp để thử bàn phối.":
+                    "Giữ ứng dụng mở hoặc chạy nền khi chờ.\nThời gian xử lý tùy độ dài bài hát.");
+            int step=state.demo?2:state.phase==StudioSession.Phase.CACHING?2:
+                    state.phase==StudioSession.Phase.SEPARATING||state.phase==StudioSession.Phase.QUEUED?1:0;
+            int[] numbers={R.id.stepNumber0,R.id.stepNumber1,R.id.stepNumber2};
+            int[] titles={R.id.stepTitle0,R.id.stepTitle1,R.id.stepTitle2};
+            int[] checks={R.id.stepCheck0,R.id.stepCheck1,R.id.stepCheck2};
+            for(int i=0;i<3;i++) {
+                TextView number=findViewById(numbers[i]);number.setText(i<step?"✓":"0"+(i+1));
+                number.setTextColor(i<=step?colors[i==step?0:1]:getColor(R.color.muted));
+                ((TextView)findViewById(titles[i])).setTextColor(getColor(i<=step?R.color.paper:R.color.muted));
+                findViewById(checks[i]).setVisibility(i<step?View.VISIBLE:View.INVISIBLE);
+            }
+            text(R.id.stepTitle0,state.demo?"Demo trên thiết bị":"Tải nhạc lên");
+            text(R.id.stepTitle1,state.demo?"Không sử dụng AI":"AI tách âm thanh");
+            text(R.id.stepTitle2,state.demo?"Tạo 4 track tổng hợp":"Chuẩn bị bản phối");
+        } else if(state.phase==StudioSession.Phase.ERROR) {
+            display(Screen.UPLOAD,true);
+            // Keep the inline failure visible even when a selected file makes the page taller.
+            findViewById(R.id.uploadError).post(() -> {
+                View error=findViewById(R.id.uploadError);
+                error.requestRectangleOnScreen(new android.graphics.Rect(0,0,error.getWidth(),error.getHeight()),true);
+            });
+        }
+        else if(state.phase==StudioSession.Phase.READY && state.stems!=boundStems) {
+            boolean showResult=currentScreen==Screen.PROCESSING||currentScreen==Screen.MIXER;
+            bindMixer();
+            if(showResult) display(Screen.MIXER,true);
         }
     }
 
-
-    // ============================
-    // DESTROY
-    // ============================
-
-    @Override
-    protected void onDestroy() {
-
-
-        super.onDestroy();
-
-        activeJobId = null;
-        statusHandler.removeCallbacksAndMessages(null);
-
-
-        for (
-                TrackUI track
-                :
-                tracks
-        ) {
-
-
-            releasePlayer(
-                    track
-            );
+    private void display(Screen screen,boolean animate) {
+        if(currentScreen==screen) return;
+        if(screen==Screen.MIXER && session.stems==null) screen=Screen.UPLOAD;
+        currentScreen=screen;
+        int[] ids={R.id.screenHome,R.id.screenUpload,R.id.screenProcessing,R.id.screenMixer};
+        for(int i=0;i<ids.length;i++) {
+            View view=findViewById(ids[i]);view.animate().cancel();view.setVisibility(i==screen.ordinal()?View.VISIBLE:View.GONE);
+            if(i==screen.ordinal() && animate) {
+                view.setAlpha(0);view.setTranslationY(12*getResources().getDisplayMetrics().density);
+                view.animate().alpha(1).translationY(0).setDuration(220).start();
+            } else { view.setAlpha(1);view.setTranslationY(0); }
         }
+        boolean home=screen==Screen.HOME;
+        findViewById(R.id.btnBack).setVisibility(home?View.GONE:View.VISIBLE);
+        findViewById(R.id.brandIcon).setVisibility(home?View.VISIBLE:View.GONE);
+        findViewById(R.id.btnSettings).setVisibility(screen==Screen.PROCESSING?View.GONE:View.VISIBLE);
+        findViewById(R.id.bottomNav).setVisibility(screen==Screen.PROCESSING?View.GONE:View.VISIBLE);
+        text(R.id.toolbarTitle,home?"demucs lite":screen==Screen.UPLOAD?"Thêm bài hát":screen==Screen.PROCESSING?"Phòng tách âm":"Mix studio");
+        TextView homeNav=findViewById(R.id.navHome),studioNav=findViewById(R.id.navStudio);
+        homeNav.setTextColor(getColor(home?R.color.purple:R.color.muted));
+        homeNav.setCompoundDrawableTintList(ColorStateList.valueOf(getColor(home?R.color.purple:R.color.muted)));
+        studioNav.setTextColor(getColor(home?R.color.muted:R.color.purple));
+        studioNav.setCompoundDrawableTintList(ColorStateList.valueOf(getColor(home?R.color.muted:R.color.purple)));
+        ViewCompat.setAccessibilityPaneTitle(findViewById(ids[screen.ordinal()]),((TextView)findViewById(R.id.toolbarTitle)).getText());
     }
 
-
-    // ============================
-    // CALLBACK
-    // ============================
-
-    private interface CacheCallback {
-
-        void onDone(
-                boolean success
-        );
+    private void bindMixer() {
+        releasePlayers();boundStems=session.stems;
+        text(R.id.mixerFileName,session.resultName);
+        text(R.id.mixerMeta,session.demo?"DEMO · Âm thanh tổng hợp":"4 track · WAV không nén");
+        text(R.id.resultBadge,session.demo?"DEMO / OFFLINE":"4 TRACK SẴN SÀNG");
+        String[] names={"Vocals","Drums","Bass","Other"},descriptions={"Giọng hát","Trống & bộ gõ","Âm trầm","Nhạc cụ khác"};
+        int[] roots={R.id.trackVocals,R.id.trackDrums,R.id.trackBass,R.id.trackOther};
+        int[] icons={R.drawable.ic_mic,R.drawable.ic_drums,R.drawable.ic_bass,R.drawable.ic_music};
+        for(int i=0;i<4;i++) {
+            final int index=i;StudioSession.Stem stem=boundStems[i];View card=findViewById(roots[i]);cards[i]=card;
+            ((TextView)card.findViewById(R.id.stemName)).setText(names[i]);
+            ((TextView)card.findViewById(R.id.stemDescription)).setText(session.demo?new String[]{"Giai điệu tổng hợp","Trống điện tử","Bass tổng hợp","Hợp âm tổng hợp"}[i]:descriptions[i]);
+            ImageView icon=card.findViewById(R.id.stemIcon);icon.setImageResource(icons[i]);icon.setImageTintList(ColorStateList.valueOf(colors[i]));
+            ((WaveformView)card.findViewById(R.id.stemWave)).setWaveform(stem.envelope,colors[i]);
+            SeekBar slider=card.findViewById(R.id.stemVolume);slider.setProgress(stem.volume);
+            slider.setProgressTintList(ColorStateList.valueOf(colors[i]));slider.setThumbTintList(ColorStateList.valueOf(colors[i]));
+            slider.setContentDescription("Âm lượng "+names[i]);
+            ((TextView)card.findViewById(R.id.stemPercent)).setText(stem.volume+"%");
+            slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar bar,int value,boolean user) {
+                    stem.volume=value;((TextView)card.findViewById(R.id.stemPercent)).setText(value+"%");applyMix();
+                }
+                @Override public void onStartTrackingTouch(SeekBar bar) { }
+                @Override public void onStopTrackingTouch(SeekBar bar) { }
+            });
+            card.findViewById(R.id.stemMute).setContentDescription("Tắt âm "+names[i]);
+            card.findViewById(R.id.stemMute).setOnClickListener(v -> { stem.muted=!stem.muted;applyMix(); });
+            card.findViewById(R.id.stemSolo).setContentDescription("Nghe riêng "+names[i]);
+            card.findViewById(R.id.stemSolo).setOnClickListener(v -> {
+                boolean enable=!stem.solo;for(StudioSession.Stem s:boundStems) s.solo=false;
+                stem.solo=enable;if(enable) stem.muted=false;applyMix();
+            });
+            card.findViewById(R.id.stemDownload).setContentDescription("Lưu "+names[i]+" WAV");
+            card.findViewById(R.id.stemDownload).setOnClickListener(v -> exportTracks(index));
+        }
+        applyMix();preparePlayers();
     }
 
-
-    // ============================
-    // TRACK OBJECT
-    // ============================
-
-    private static class TrackUI {
-
-
-        final String key;
-
-        final String title;
-
-        final Button playButton;
-
-        final Button downloadButton;
-
-        final SeekBar volumeSeekBar;
-
-
-        String url;
-
-        File cacheFile;
-
-        MediaPlayer player;
-
-        float volume = 1f;
-
-
-        TrackUI(
-                String key,
-                String title,
-                Button playButton,
-                Button downloadButton,
-                SeekBar volumeSeekBar
-        ) {
-
-
-            this.key =
-                    key;
-
-
-            this.title =
-                    title;
-
-
-            this.playButton =
-                    playButton;
-
-
-            this.downloadButton =
-                    downloadButton;
-
-
-            this.volumeSeekBar =
-                    volumeSeekBar;
+    private void preparePlayers() {
+        findViewById(R.id.btnPlayAll).setEnabled(false);
+        int token=++playerGeneration;
+        for(int i=0;i<4;i++) {
+            final int index=i;MediaPlayer player=new MediaPlayer();players[i]=player;
+            player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
+            player.setOnPreparedListener(mp -> {
+                if(token!=playerGeneration) return;
+                prepared[index]=true;applyMix();
+                for(boolean ready:prepared) if(!ready) return;
+                duration=Integer.MAX_VALUE;for(MediaPlayer p:players) duration=Math.min(duration,p.getDuration());
+                session.playbackPosition=Math.min(session.playbackPosition,duration);
+                ((SeekBar)findViewById(R.id.playbackSeek)).setMax(duration);
+                ((SeekBar)findViewById(R.id.playbackSeek)).setProgress(session.playbackPosition);
+                seekPlayers(session.playbackPosition);updateTime();
+                text(R.id.totalTime,time(duration));findViewById(R.id.btnPlayAll).setEnabled(true);
+            });
+            player.setOnCompletionListener(mp -> {
+                if(token!=playerGeneration) return;
+                pause();session.playbackPosition=0;seekPlayers(0);
+                ((SeekBar)findViewById(R.id.playbackSeek)).setProgress(0);updateTime();
+            });
+            player.setOnErrorListener((mp,what,extra) -> {
+                if(token==playerGeneration) {
+                    pause();prepared[index]=false;findViewById(R.id.btnPlayAll).setEnabled(false);
+                    toast("Không đọc được track "+boundStems[index].key+". Bạn vẫn có thể lưu file WAV.");
+                }
+                return true;
+            });
+            try { player.setDataSource(boundStems[i].file.getAbsolutePath());player.prepareAsync(); }
+            catch(IOException e) { toast("Không mở được track "+boundStems[i].key); }
         }
+    }
+    private void applyMix() {
+        if(boundStems==null) return;
+        boolean solo=false;for(StudioSession.Stem stem:boundStems) solo|=stem.solo;
+        for(int i=0;i<4;i++) {
+            StudioSession.Stem stem=boundStems[i];boolean audible=!stem.muted&&(!solo||stem.solo);
+            // Leave headroom for the sum of four independently played stems.
+            float volume=audible?stem.volume/100f*.7f:0;
+            if(prepared[i]&&players[i]!=null) players[i].setVolume(volume,volume);
+            if(cards[i]==null) continue;
+            ImageButton mute=cards[i].findViewById(R.id.stemMute);mute.setImageResource(stem.muted?R.drawable.ic_mute:R.drawable.ic_volume);
+            mute.setImageTintList(ColorStateList.valueOf(stem.muted?colors[i]:getColor(R.color.muted)));
+            ViewCompat.setStateDescription(mute,stem.muted?"Đã tắt âm":"Đang bật âm");
+            TextView s=cards[i].findViewById(R.id.stemSolo);s.setTextColor(stem.solo?colors[i]:getColor(R.color.muted));
+            ViewCompat.setStateDescription(s,stem.solo?"Đang nghe riêng":"Không nghe riêng");
+            cards[i].findViewById(R.id.stemWave).setAlpha(audible?1:.3f);
+        }
+    }
+    private void play() {
+        for(boolean ready:prepared) if(!ready) { toast("Đang chuẩn bị âm thanh…");return; }
+        if(audioManager.requestAudioFocus(focusRequest)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            toast("Chưa thể phát nhạc lúc này.");return;
+        }
+        for(MediaPlayer player:players) player.start();playing=true;
+        ImageButton play=findViewById(R.id.btnPlayAll);play.setImageResource(R.drawable.ic_pause);play.setContentDescription("Tạm dừng bản phối");
+        ui.removeCallbacks(tick);ui.post(tick);
+    }
+    private void pause() {
+        if(playing&&players[0]!=null&&prepared[0]) session.playbackPosition=players[0].getCurrentPosition();
+        for(int i=0;i<4;i++) if(prepared[i]&&players[i]!=null&&players[i].isPlaying()) players[i].pause();
+        playing=false;ui.removeCallbacks(tick);
+        ImageButton play=findViewById(R.id.btnPlayAll);
+        if(play!=null) { play.setImageResource(R.drawable.ic_play);play.setContentDescription("Phát bản phối"); }
+        if(audioManager!=null&&focusRequest!=null) audioManager.abandonAudioFocusRequest(focusRequest);
+    }
+    private void seekPlayers(int position) {
+        for(int i=0;i<4;i++) if(prepared[i]&&players[i]!=null) players[i].seekTo(position,MediaPlayer.SEEK_CLOSEST);
+    }
+    private void releasePlayers() {
+        pause();playerGeneration++;
+        for(int i=0;i<4;i++) { prepared[i]=false;if(players[i]!=null) { players[i].release();players[i]=null; } }
+    }
+    private void updateTime() {
+        text(R.id.currentTime,time(session.playbackPosition));
+        for(View card:cards) if(card!=null) ((WaveformView)card.findViewById(R.id.stemWave)).setPosition(duration>0?session.playbackPosition/(float)duration:0);
+    }
+    private String time(int ms) { return String.format(Locale.ROOT,"%d:%02d",ms/60000,(ms/1000)%60); }
+
+    private void exportTracks(int only) {
+        if(boundStems==null||exporting) return;
+        exporting=true;findViewById(R.id.btnExport).setEnabled(false);text(R.id.btnExport,"Đang lưu WAV…");
+        StudioSession.Stem[] results=boundStems;
+        String name=session.resultName.replaceAll("\\.[^.]+$","").replaceAll("[^\\p{L}\\p{N}._-]","_");
+        if(name.length()>70) name=name.substring(0,70);
+        final String baseName=name;
+        // Capture the application resolver so a rotation does not interrupt an export.
+        android.content.ContentResolver resolver=getApplicationContext().getContentResolver();
+        exportWorker.execute(() -> {
+            ArrayList<Uri> created=new ArrayList<>();String failure=null;int count=0;
+            try {
+                for(int i=0;i<4;i++) {
+                    if(only>=0&&only!=i) continue;
+                    ContentValues values=new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME,baseName+"_"+results[i].key+".wav");
+                    values.put(MediaStore.Downloads.MIME_TYPE,"audio/wav");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH,Environment.DIRECTORY_DOWNLOADS+"/DemucsLite");
+                    values.put(MediaStore.Downloads.IS_PENDING,1);
+                    Uri uri=resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI,values);
+                    if(uri==null) throw new IOException("Không tạo được file trong Downloads.");
+                    created.add(uri);
+                    try(FileInputStream in=new FileInputStream(results[i].file);OutputStream out=resolver.openOutputStream(uri)) {
+                        if(out==null) throw new IOException("Không mở được file để lưu.");
+                        byte[] buffer=new byte[65536];int n;while((n=in.read(buffer))!=-1) out.write(buffer,0,n);
+                    }
+                }
+                // Publish only after every requested WAV has been copied successfully.
+                for(Uri uri:created) {
+                    ContentValues done=new ContentValues();done.put(MediaStore.Downloads.IS_PENDING,0);
+                    resolver.update(uri,done,null,null);count++;
+                }
+            } catch(Exception e) {
+                failure="Không lưu được WAV. Kiểm tra dung lượng trống rồi thử lại.";
+                for(Uri uri:created) { try { resolver.delete(uri,null,null); } catch(Exception ignored) { } }
+            }
+            final String error=failure;final int saved=count;
+            ui.post(() -> {
+                exporting=false;
+                if(isDestroyed()) return;
+                findViewById(R.id.btnExport).setEnabled(true);text(R.id.btnExport,"Lưu 4 track WAV     ↓");
+                if(error!=null) { toast(error);return; }
+                new AlertDialog.Builder(this).setTitle("Đã lưu "+saved+" track ✨")
+                        .setMessage("File WAV nằm trong Downloads/DemucsLite.\n\nĐây là các track gốc đã tách; âm lượng slider chỉ áp dụng khi nghe trong ứng dụng.")
+                        .setPositiveButton("Xong",(dialog,which)->{}).show();
+            });
+        });
+    }
+
+    private void showSettings() {
+        EditText input=new EditText(this);input.setSingleLine();input.setText(session.serverUrl);
+        input.setSelectAllOnFocus(true);input.setTextSize(14);
+        input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
+        int padding=(int)(24*getResources().getDisplayMetrics().density);
+        android.widget.LinearLayout box=new android.widget.LinearLayout(this);box.setPadding(padding,0,padding,0);box.addView(input,new android.widget.LinearLayout.LayoutParams(-1,Math.round(56*getResources().getDisplayMetrics().density)));
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Kết nối máy chủ")
+                .setMessage("Emulator: http://10.0.2.2:8000\nĐiện thoại: nhập IP LAN của máy chạy server.\nChỉ nhập địa chỉ gốc, không thêm /separate.")
+                .setView(box).setNegativeButton("Đóng",null).setPositiveButton("Lưu",null).create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String value=input.getText().toString().trim().replaceAll("/+$","");Uri uri=Uri.parse(value);
+            if(!("http".equals(uri.getScheme())||"https".equals(uri.getScheme()))||uri.getHost()==null
+                    ||uri.getQuery()!=null||uri.getFragment()!=null||uri.getUserInfo()!=null
+                    ||(uri.getPath()!=null&&!uri.getPath().isEmpty())) {
+                input.setError("Nhập địa chỉ gốc hợp lệ, ví dụ http://10.0.2.2:8000");return;
+            }
+            session.setServer(value);dialog.dismiss();toast("Đã lưu địa chỉ máy chủ.");
+        }));
+        dialog.show();
+    }
+    private void confirmCancel() {
+        if(!session.isBusy()) { display(Screen.UPLOAD,true);return; }
+        new AlertDialog.Builder(this).setTitle("Dừng chờ xử lý?")
+                .setMessage("Ứng dụng sẽ ngừng chờ và tải kết quả. Tác vụ đã gửi vẫn có thể tiếp tục trên máy chủ.")
+                .setNegativeButton("Tiếp tục chờ",null).setPositiveButton("Dừng chờ",(d,w)-> { session.cancel();display(Screen.UPLOAD,true); }).show();
+    }
+    private void text(int id,String value) { ((TextView)findViewById(id)).setText(value); }
+    private void toast(String value) { Toast.makeText(this,value,Toast.LENGTH_LONG).show(); }
+    @Override protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);out.putString("screen",currentScreen.name());
+        if(session.selectedUri!=null) { out.putString("uri",session.selectedUri.toString());out.putString("name",session.fileName);out.putLong("size",session.fileSize); }
+    }
+    @Override protected void onStop() { pause();super.onStop(); }
+    @Override protected void onDestroy() {
+        releasePlayers();ui.removeCallbacksAndMessages(null);exportWorker.shutdown();super.onDestroy();
     }
 }

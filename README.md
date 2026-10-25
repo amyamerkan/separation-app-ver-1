@@ -1,17 +1,28 @@
-# Music Source Separation API
+# DemucsLite
 
-API tách nguồn âm thanh (vocals/drums/bass/other) dùng mô hình **DemucsLite** đã huấn luyện ở notebook `w5.ipynb`, đóng gói thành dịch vụ FastAPI.
+Ứng dụng Android tách nhạc thành vocals, drums, bass và other, kèm backend FastAPI và model DemucsLite V2 đã huấn luyện.
 
-Tải `demucs_lite_best.pth` từ [Releases](https://github.com/amyamerkan/separation-app-ver-1/releases/tag/v1.0.0), đặt vào thư mục `checkpoints/`. Xem `checkpoints/README.md` để kiểm tra SHA-256.
+## App Android mới nhất
+
+Mở **`DemucsLite/`** bằng Android Studio. Đây là project Android duy nhất đang duy trì; bản Android đóng gói cũ đã được xoá.
 
 ```bash
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-uvicorn app.main:app --reload
-
+cd DemucsLite
+./gradlew clean :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-## Android app
+APK: `DemucsLite/app/build/outputs/apk/debug/app-debug.apk`. App hỗ trợ Android 10 (API 29) trở lên. Xem [giao diện, kết nối API và kiểm tra](DemucsLite/README-UI.vi.md).
 
-Mở thư mục `DemucsLite/` bằng Android Studio. Khi chạy trên điện thoại qua USB, dùng `adb reverse tcp:8000 tcp:8000` để app truy cập backend trên máy tính tại `http://127.0.0.1:8000`.
+## Backend và model hiện tại
+
+Backend đang dùng nằm tại `DemucsLite/DemucsLite_deploy/backend`, kèm checkpoint `checkpoints/best_model.pth`. Cài Python và dependencies theo [hướng dẫn triển khai](DemucsLite/DemucsLite_deploy/README.vi.md), sau đó chạy từ thư mục backend:
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+```
+
+Trên Mac đã cài môi trường backend, có thể chạy `DemucsLite/start-backend.command`. Android Emulator dùng `http://10.0.2.2:8000`; điện thoại thật dùng IP LAN của máy chạy backend và đổi URL trong cài đặt app.
+
+Code backend đời đầu tại `app/` và `scripts/` được giữ để tham khảo. Notebook huấn luyện hiện tại nằm trong `DemucsLite/DemucsLite_deploy/training/`.
+
+Build/cache, cấu hình máy cá nhân và dữ liệu upload không đưa vào Git.

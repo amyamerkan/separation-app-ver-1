@@ -1,15 +1,16 @@
+# Local configuration and generated files
 .DS_Store
-**/__pycache__/
+__pycache__/
 *.py[cod]
+.pytest_cache/
 .venv/
 venv/
 .env
 .env.*
 !.env.example
-**/.idea/
-**/.gradle/
-**/build/
-**/local.properties
-/storage/
+storage/
+*.jks
+*.keystore
+# Legacy model is distributed through the existing GitHub release.
 /checkpoints/*
 !/checkpoints/README.md

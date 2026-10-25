@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:clipToPadding="false" android:scrollbars="none">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="24dp" android:paddingTop="16dp" android:paddingBottom="24dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_02_separate" android:textSize="10sp" android:textColor="@color/mint" android:background="@drawable/pill" android:paddingHorizontal="12dp" android:paddingVertical="7dp" android:fontFamily="sans-serif-medium" android:letterSpacing="0.05" />
+        <Space android:layout_width="1dp" android:layout_height="20dp" />
+        <TextView style="@style/Title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/processing_title" />
+        <Space android:layout_width="1dp" android:layout_height="12dp" />
+        <TextView style="@style/Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/processing_description" android:id="@+id/processingDescription" />
+        <Space android:layout_width="1dp" android:layout_height="8dp" />
+        <FrameLayout android:layout_width="match_parent" android:layout_height="224dp">
+            <com.example.demucslite.ui.ProgressOrbitView android:id="@+id/progressOrbit" android:layout_width="match_parent" android:layout_height="match_parent" android:importantForAccessibility="no" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/progressValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_progressvalue" android:textSize="42sp" android:textColor="@color/paper" android:fontFamily="sans-serif-medium" android:letterSpacing="-0.05" />
+                <TextView android:id="@+id/progressLabel" style="@style/Eyebrow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="@string/ui_progresslabel" />
+            </LinearLayout>
+        </FrameLayout>
+        <TextView android:id="@+id/processingFile" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:maxLines="1" android:ellipsize="middle" android:textSize="14sp" android:textColor="@color/paper" />
+        <TextView android:id="@+id/processingStatus" style="@style/Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:layout_marginTop="8dp" android:textSize="12sp" android:accessibilityLiveRegion="polite" />
+        <Space android:layout_width="1dp" android:layout_height="22dp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/card_flat" android:paddingHorizontal="18dp" android:paddingVertical="6dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="12dp">
+                <TextView android:id="@+id/stepNumber0" android:layout_width="36dp" android:layout_height="36dp" android:gravity="center" android:background="@drawable/pill" android:text="@string/ui_stepnumber0" android:textColor="@color/muted" android:textSize="12sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="14dp" android:orientation="vertical">
+                    <TextView android:id="@+id/stepTitle0" style="@style/StepText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_steptitle0" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_ua_am_thanh_vao_studio" android:textSize="11sp" android:textColor="@color/muted" android:id="@+id/stepSubtitle0" />
+                </LinearLayout>
+                <ImageView android:id="@+id/stepCheck0" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_check" app:tint="@color/mint" android:visibility="invisible" android:importantForAccessibility="no" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="12dp">
+                <TextView android:id="@+id/stepNumber1" android:layout_width="36dp" android:layout_height="36dp" android:gravity="center" android:background="@drawable/pill" android:text="@string/ui_stepnumber1" android:textColor="@color/muted" android:textSize="12sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="14dp" android:orientation="vertical">
+                    <TextView android:id="@+id/stepTitle1" style="@style/StepText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_steptitle1" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_nhan_dien_giong_hat_va_nhac_cu" android:textSize="11sp" android:textColor="@color/muted" android:id="@+id/stepSubtitle1" />
+                </LinearLayout>
+                <ImageView android:id="@+id/stepCheck1" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_check" app:tint="@color/mint" android:visibility="invisible" android:importantForAccessibility="no" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingVertical="12dp">
+                <TextView android:id="@+id/stepNumber2" android:layout_width="36dp" android:layout_height="36dp" android:gravity="center" android:background="@drawable/pill" android:text="@string/ui_stepnumber2" android:textColor="@color/muted" android:textSize="12sp" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="14dp" android:orientation="vertical">
+                    <TextView android:id="@+id/stepTitle2" style="@style/StepText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_steptitle2" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_tai_4_track_ve_thiet_bi" android:textSize="11sp" android:textColor="@color/muted" android:id="@+id/stepSubtitle2" />
+                </LinearLayout>
+                <ImageView android:id="@+id/stepCheck2" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_check" app:tint="@color/mint" android:visibility="invisible" android:importantForAccessibility="no" />
+            </LinearLayout>
+        </LinearLayout>
+        <Space android:layout_width="1dp" android:layout_height="18dp" />
+        <TextView android:id="@+id/processingHint" style="@style/Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="@string/ui_processinghint" android:textSize="11sp" />
+        <Space android:layout_width="1dp" android:layout_height="16dp" />
+        <androidx.appcompat.widget.AppCompatButton android:id="@+id/btnCancel" style="@style/SecondaryButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="@string/ui_btncancel" />
+    </LinearLayout>
+</ScrollView>

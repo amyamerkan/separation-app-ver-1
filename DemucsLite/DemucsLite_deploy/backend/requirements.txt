@@ -1,0 +1,11 @@
+# Python 3.12; torch and torchaudio must use the same version/build.
+torch==2.5.1
+torchaudio==2.5.1
+numpy==1.26.4
+soundfile==0.14.0
+demucs==4.0.1
+tqdm==4.70.1
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+python-dotenv==1.2.4

@@ -1,0 +1,8 @@
+# Install a matching torch/torchaudio pair for your CUDA runtime first.
+torch>=2.5,<2.9
+torchaudio>=2.5,<2.9
+numpy>=1.26,<2
+soundfile>=0.12,<0.14
+demucs==4.0.1
+tqdm>=4.66
+pytest>=8

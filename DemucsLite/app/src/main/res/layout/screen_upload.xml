@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:clipToPadding="false" android:scrollbars="none">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="24dp" android:paddingTop="16dp" android:paddingBottom="24dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_01_upload" android:textSize="10sp" android:textColor="@color/purple" android:background="@drawable/pill" android:paddingHorizontal="12dp" android:paddingVertical="7dp" android:fontFamily="sans-serif-medium" android:letterSpacing="0.05" />
+        <Space android:layout_width="1dp" android:layout_height="20dp" />
+        <TextView style="@style/Title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/upload_title" />
+        <Space android:layout_width="1dp" android:layout_height="12dp" />
+        <TextView style="@style/Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/upload_description" />
+        <Space android:layout_width="1dp" android:layout_height="24dp" />
+        <LinearLayout android:id="@+id/uploadZone" android:layout_width="match_parent" android:layout_height="218dp" android:orientation="vertical" android:gravity="center" android:background="@drawable/upload_zone" android:clickable="true" android:focusable="true" android:contentDescription="@string/ui_a11y_uploadzone">
+            <ImageView android:layout_width="56dp" android:layout_height="56dp" android:padding="14dp" android:background="@drawable/icon_tile" android:src="@drawable/ic_upload" app:tint="@color/purple" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/uploadPrompt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="@string/ui_uploadprompt" android:textSize="17sp" android:fontFamily="sans-serif-medium" android:textColor="@color/paper" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:layout_marginBottom="16dp" android:text="@string/ui_tu_thiet_bi_toi_a_50_mb" android:textSize="12sp" android:textColor="@color/muted" />
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_mp3" android:textSize="10sp" android:textColor="@color/muted" android:background="@drawable/pill" android:paddingHorizontal="12dp" android:paddingVertical="7dp" android:fontFamily="sans-serif-medium" android:letterSpacing="0.05" />
+                <Space android:layout_width="6dp" android:layout_height="1dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_wav" android:textSize="10sp" android:textColor="@color/muted" android:background="@drawable/pill" android:paddingHorizontal="12dp" android:paddingVertical="7dp" android:fontFamily="sans-serif-medium" android:letterSpacing="0.05" />
+                <Space android:layout_width="6dp" android:layout_height="1dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_flac" android:textSize="10sp" android:textColor="@color/muted" android:background="@drawable/pill" android:paddingHorizontal="12dp" android:paddingVertical="7dp" android:fontFamily="sans-serif-medium" android:letterSpacing="0.05" />
+                <Space android:layout_width="6dp" android:layout_height="1dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_m4a" android:textSize="10sp" android:textColor="@color/muted" android:background="@drawable/pill" android:paddingHorizontal="12dp" android:paddingVertical="7dp" android:fontFamily="sans-serif-medium" android:letterSpacing="0.05" />
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/selectedFileCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:background="@drawable/card" android:padding="16dp" android:gravity="center_vertical" android:visibility="gone">
+            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_music" app:tint="@color/purple" android:importantForAccessibility="no" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="12dp" android:orientation="vertical">
+                <TextView android:id="@+id/selectedFileName" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="2" android:ellipsize="middle" android:textSize="14sp" android:textColor="@color/paper" android:fontFamily="sans-serif-medium" />
+                <TextView android:id="@+id/selectedFileMeta" style="@style/Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" />
+            </LinearLayout>
+            <ImageButton android:id="@+id/btnRemoveFile" style="@style/IconButton" android:layout_width="44dp" android:layout_height="44dp" android:src="@drawable/ic_close" android:contentDescription="@string/ui_a11y_btnremovefile" />
+        </LinearLayout>
+        <Space android:layout_width="1dp" android:layout_height="24dp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_mot_bai_hat_bon_lop_am_thanh" android:textSize="10sp" android:textColor="@color/muted" android:letterSpacing="0.1" />
+        <Space android:layout_width="1dp" android:layout_height="14dp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="44dp" android:layout_height="44dp" android:padding="10dp" android:background="@drawable/button_icon" android:src="@drawable/ic_mic" app:tint="@color/purple" android:importantForAccessibility="no" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_vocals" android:textSize="11sp" android:textColor="@color/paper" android:layout_marginTop="8dp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="44dp" android:layout_height="44dp" android:padding="10dp" android:background="@drawable/button_icon" android:src="@drawable/ic_drums" app:tint="@color/mint" android:importantForAccessibility="no" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_drums" android:textSize="11sp" android:textColor="@color/paper" android:layout_marginTop="8dp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="44dp" android:layout_height="44dp" android:padding="10dp" android:background="@drawable/button_icon" android:src="@drawable/ic_bass" app:tint="@color/peach" android:importantForAccessibility="no" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_bass" android:textSize="11sp" android:textColor="@color/paper" android:layout_marginTop="8dp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageView android:layout_width="44dp" android:layout_height="44dp" android:padding="10dp" android:background="@drawable/button_icon" android:src="@drawable/ic_music" app:tint="@color/blue" android:importantForAccessibility="no" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_other" android:textSize="11sp" android:textColor="@color/paper" android:layout_marginTop="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+        <Space android:layout_width="1dp" android:layout_height="24dp" />
+        <TextView android:id="@+id/uploadError" style="@style/Body" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/error_card" android:padding="16dp" android:textColor="@color/error" android:visibility="gone" android:accessibilityLiveRegion="polite" />
+        <Space android:layout_width="1dp" android:layout_height="12dp" />
+        <androidx.appcompat.widget.AppCompatButton android:id="@+id/btnSeparate" style="@style/PrimaryButton" android:layout_width="match_parent" android:layout_height="56dp" android:text="@string/ui_btnseparate" android:enabled="false" />
+        <Space android:layout_width="1dp" android:layout_height="12dp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_file_goc_uoc_giu_nguyen_tren_thiet_bi" android:textSize="11sp" android:textColor="@color/muted" android:layout_gravity="center_horizontal" />
+    </LinearLayout>
+</ScrollView>

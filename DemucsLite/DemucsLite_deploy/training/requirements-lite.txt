@@ -1,0 +1,6 @@
+# Colab already provides CUDA-enabled torch. Keep its installed build.
+# The Lite notebook installs only missing packages or versions below these minima.
+torch>=2.5
+numpy>=1.26
+soundfile>=0.12
+tqdm>=4.66

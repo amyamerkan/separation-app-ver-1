@@ -1,0 +1,20 @@
+services:
+  api:
+    build:
+      context: ./backend
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      MODEL_DEVICE: "${MODEL_DEVICE:-cpu}"
+      CHECKPOINT_PATH: /app/checkpoints/best_model.pth
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
+      STORAGE_BACKEND: local
+      MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-50}"
+      INFERENCE_OVERLAP: "${INFERENCE_OVERLAP:-0.5}"
+    volumes:
+      - separation_storage:/app/storage
+    restart: unless-stopped
+    init: true
+
+volumes:
+  separation_storage:

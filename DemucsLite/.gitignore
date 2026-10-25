@@ -13,3 +13,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# IDE state and generated Android artifacts
+.idea/
+**/build/
+*.apk
+*.aab
+*.apks
+# Local reports; UI screenshots are maintained with the app documentation.
+/reports/*
+!/reports/ui-preview/
+/DemucsLite_deploy.zip
