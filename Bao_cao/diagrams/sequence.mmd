@@ -1,0 +1,40 @@
+sequenceDiagram
+  actor U as Người dùng
+  participant A as Android
+  participant F as FastAPI
+  participant J as JobStore
+  participant P as Pipeline và model
+  participant S as Storage
+  U->>A: Chọn file và bắt đầu
+  A->>F: POST /separate multipart file
+  F->>F: Kiểm tra và lưu hết input
+  F->>J: create(job_id, pending)
+  F-->>A: job_id và pending
+  F->>P: Đăng ký BackgroundTasks
+  P->>P: Chờ khóa suy luận
+  P->>J: processing
+  P->>P: Decode, overlap-add, xuất PCM16
+  loop Poll mỗi 1,8 giây đến trạng thái kết thúc
+    A->>F: GET /status/{job_id}
+    F->>J: get(job_id)
+    J-->>F: Bản ghi hiện tại
+    F-->>A: status và kết quả nếu đã có
+  end
+  alt Xử lý thành công
+    P->>S: Ghi hoặc upload 4 WAV
+    S-->>P: result_urls
+    P->>J: done và result_urls
+    A->>F: Lần poll tiếp theo
+    F-->>A: done và result_urls
+    loop Tải từng nguồn theo thứ tự
+      A->>S: GET WAV
+      S-->>A: Nội dung tệp
+    end
+    A-->>U: Mở mixer
+  else Lỗi xử lý
+    P->>J: failed và error
+    P->>P: Xóa kết quả dở dang
+    F-->>A: failed ở lần poll tiếp theo
+    A-->>U: Thông báo lỗi
+  end
+  P->>P: finally xóa input tạm

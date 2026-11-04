@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="532.8pt" height="309.6pt" viewBox="0 0 532.8 309.6" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T11:38:34.086938</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 309.6 
+L 532.8 309.6 
+L 532.8 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 63.936 241.488 
+L 522.144 241.488 
+L 522.144 21.672 
+L 63.936 21.672 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path id="m0352a08d7b" d="M 0 0 
+L 0 3.5 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#m0352a08d7b" x="136.44123" y="241.488" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle" x="136.44123" y="257.514875" transform="rotate(-0 136.44123 257.514875)">Vocals</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use xlink:href="#m0352a08d7b" x="293.04" y="241.488" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle" x="293.04" y="257.501672" transform="rotate(-0 293.04 257.501672)">Drums</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use xlink:href="#m0352a08d7b" x="449.63877" y="241.488" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle" x="449.63877" y="257.501672" transform="rotate(-0 449.63877 257.501672)">Bass</text>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_4">
+      <path d="M 63.936 241.488 
+L 522.144 241.488 
+" clip-path="url(#p43255ff982)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.18; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_5">
+      <defs>
+       <path id="me02f2936bf" d="M 0 0 
+L -3.5 0 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#me02f2936bf" x="63.936" y="241.488" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_4">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: end" x="56.936" y="245.994836" transform="rotate(-0 56.936 245.994836)">0.0</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_6">
+      <path d="M 63.936 202.235143 
+L 522.144 202.235143 
+" clip-path="url(#p43255ff982)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.18; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_7">
+      <g>
+       <use xlink:href="#me02f2936bf" x="63.936" y="202.235143" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: end" x="56.936" y="206.741979" transform="rotate(-0 56.936 206.741979)">0.5</text>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_8">
+      <path d="M 63.936 162.982286 
+L 522.144 162.982286 
+" clip-path="url(#p43255ff982)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.18; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_9">
+      <g>
+       <use xlink:href="#me02f2936bf" x="63.936" y="162.982286" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_6">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: end" x="56.936" y="167.489122" transform="rotate(-0 56.936 167.489122)">1.0</text>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_10">
+      <path d="M 63.936 123.729429 
+L 522.144 123.729429 
+" clip-path="url(#p43255ff982)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.18; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_11">
+      <g>
+       <use xlink:href="#me02f2936bf" x="63.936" y="123.729429" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_7">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: end" x="56.936" y="128.236265" transform="rotate(-0 56.936 128.236265)">1.5</text>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_12">
+      <path d="M 63.936 84.476571 
+L 522.144 84.476571 
+" clip-path="url(#p43255ff982)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.18; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_13">
+      <g>
+       <use xlink:href="#me02f2936bf" x="63.936" y="84.476571" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_8">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: end" x="56.936" y="88.983407" transform="rotate(-0 56.936 88.983407)">2.0</text>
+     </g>
+    </g>
+    <g id="ytick_6">
+     <g id="line2d_14">
+      <path d="M 63.936 45.223714 
+L 522.144 45.223714 
+" clip-path="url(#p43255ff982)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.18; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_15">
+      <g>
+       <use xlink:href="#me02f2936bf" x="63.936" y="45.223714" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_9">
+      <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: end" x="56.936" y="49.73055" transform="rotate(-0 56.936 49.73055)">2.5</text>
+     </g>
+    </g>
+    <g id="text_10">
+     <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle" x="33.880336" y="131.58" transform="rotate(-90 33.880336 131.58)">SDR* theo báo cáo (dB)</text>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 84.763636 241.488 
+L 136.44123 241.488 
+L 136.44123 95.938406 
+L 84.763636 95.938406 
+z
+" clip-path="url(#p43255ff982)" style="fill: #365a7a"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 241.362406 241.488 
+L 293.04 241.488 
+L 293.04 88.794386 
+L 241.362406 88.794386 
+z
+" clip-path="url(#p43255ff982)" style="fill: #365a7a"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 397.961176 241.488 
+L 449.63877 241.488 
+L 449.63877 181.431129 
+L 397.961176 181.431129 
+z
+" clip-path="url(#p43255ff982)" style="fill: #365a7a"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 136.44123 241.488 
+L 188.118824 241.488 
+L 188.118824 58.648191 
+L 136.44123 58.648191 
+z
+" clip-path="url(#p43255ff982)" style="fill: url(#h10ce6216f7); stroke: #365a7a; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 293.04 241.488 
+L 344.717594 241.488 
+L 344.717594 104.888057 
+L 293.04 104.888057 
+z
+" clip-path="url(#p43255ff982)" style="fill: url(#h10ce6216f7); stroke: #365a7a; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 449.63877 241.488 
+L 501.316364 241.488 
+L 501.316364 97.979554 
+L 449.63877 97.979554 
+z
+" clip-path="url(#p43255ff982)" style="fill: url(#h10ce6216f7); stroke: #365a7a; stroke-width: 0.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 63.936 241.488 
+L 63.936 21.672 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 63.936 241.488 
+L 522.144 241.488 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 12px; font-family: 'Times New Roman'; text-anchor: middle" x="110.602433" y="89.348562" transform="rotate(-0 110.602433 89.348562)">1,854</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 12px; font-family: 'Times New Roman'; text-anchor: middle" x="267.201203" y="82.204542" transform="rotate(-0 267.201203 82.204542)">1,945</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 12px; font-family: 'Times New Roman'; text-anchor: middle" x="423.799973" y="174.841285" transform="rotate(-0 423.799973 174.841285)">0,765</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 12px; font-family: 'Times New Roman'; text-anchor: middle" x="162.280027" y="52.058348" transform="rotate(-0 162.280027 52.058348)">2,329</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 12px; font-family: 'Times New Roman'; text-anchor: middle" x="318.878797" y="98.298213" transform="rotate(-0 318.878797 98.298213)">1,740</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 12px; font-family: 'Times New Roman'; text-anchor: middle" x="475.477567" y="91.389711" transform="rotate(-0 475.477567 91.389711)">1,828</text>
+   </g>
+   <g id="legend_1">
+    <g id="patch_11">
+     <path d="M 192.466719 42.472 
+L 218.466719 42.472 
+L 218.466719 33.372 
+L 192.466719 33.372 
+z
+" style="fill: #365a7a"/>
+    </g>
+    <g id="text_17">
+     <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: start" x="228.866719" y="42.472" transform="rotate(-0 228.866719 42.472)">Trung bình</text>
+    </g>
+    <g id="patch_12">
+     <path d="M 312.54 42.472 
+L 338.54 42.472 
+L 338.54 33.372 
+L 312.54 33.372 
+z
+" style="fill: url(#h10ce6216f7); stroke: #365a7a; stroke-width: 0.6; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_18">
+     <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: start" x="348.94" y="42.472" transform="rotate(-0 348.94 42.472)">Trung vị</text>
+    </g>
+   </g>
+  </g>
+  <g id="text_19">
+   <text style="font-size: 11px; font-family: 'Times New Roman'" transform="translate(128.69375 274.10302)">* Công thức SNR waveform; số trích báo cáo tuần 4, trang 14.</text>
+   <text style="font-size: 11px; font-family: 'Times New Roman'" transform="translate(122.752031 287.928)">50 bài test được báo; chưa có số Other. Không phải điểm test V2.</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p43255ff982">
+   <rect x="63.936" y="21.672" width="458.208" height="219.816"/>
+  </clipPath>
+ </defs>
+ <defs>
+  <pattern id="h10ce6216f7" patternUnits="userSpaceOnUse" x="0" y="0" width="72" height="72">
+   <rect x="0" y="0" width="73" height="73" fill="#a6bacb"/>
+   <path d="M -36 36 
+L 36 -36 
+M -30 42 
+L 42 -30 
+M -24 48 
+L 48 -24 
+M -18 54 
+L 54 -18 
+M -12 60 
+L 60 -12 
+M -6 66 
+L 66 -6 
+M 0 72 
+L 72 0 
+M 6 78 
+L 78 6 
+M 12 84 
+L 84 12 
+M 18 90 
+L 90 18 
+M 24 96 
+L 96 24 
+M 30 102 
+L 102 30 
+M 36 108 
+L 108 36 
+" style="fill: #365a7a; stroke: #365a7a; stroke-width: 1.0; stroke-linecap: butt; stroke-linejoin: miter"/>
+  </pattern>
+ </defs>
+</svg>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="532.8pt" height="266.4pt" viewBox="0 0 532.8 266.4" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T11:38:33.468128</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 266.4 
+L 532.8 266.4 
+L 532.8 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 32.436 97.5816 
+C 34.102961 97.5816 35.701871 96.91931 36.88059 95.74059 
+C 38.05931 94.561871 38.7216 92.962961 38.7216 91.296 
+C 38.7216 89.629039 38.05931 88.030129 36.88059 86.85141 
+C 35.701871 85.67269 34.102961 85.0104 32.436 85.0104 
+C 30.769039 85.0104 29.170129 85.67269 27.99141 86.85141 
+C 26.81269 88.030129 26.1504 89.629039 26.1504 91.296 
+C 26.1504 92.962961 26.81269 94.561871 27.99141 95.74059 
+C 29.170129 96.91931 30.769039 97.5816 32.436 97.5816 
+z
+" clip-path="url(#p0371174273)" style="fill: #172432; stroke: #172432; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 73.6416 117.1368 
+L 183.2904 117.1368 
+Q 187.4808 117.1368 187.4808 112.9464 
+L 187.4808 69.6456 
+Q 187.4808 65.4552 183.2904 65.4552 
+L 73.6416 65.4552 
+Q 69.4512 65.4552 69.4512 69.6456 
+L 69.4512 112.9464 
+Q 69.4512 117.1368 73.6416 117.1368 
+z
+" clip-path="url(#p0371174273)" style="fill: #edf2f6; stroke: #365a7a; stroke-width: 1.15; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 230.7816 117.1368 
+L 350.9064 117.1368 
+Q 355.0968 117.1368 355.0968 112.9464 
+L 355.0968 69.6456 
+Q 355.0968 65.4552 350.9064 65.4552 
+L 230.7816 65.4552 
+Q 226.5912 65.4552 226.5912 69.6456 
+L 226.5912 112.9464 
+Q 226.5912 117.1368 230.7816 117.1368 
+z
+" clip-path="url(#p0371174273)" style="fill: #edf2f6; stroke: #365a7a; stroke-width: 1.15; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 405.3816 117.1368 
+L 501.0624 117.1368 
+Q 505.2528 117.1368 505.2528 112.9464 
+L 505.2528 69.6456 
+Q 505.2528 65.4552 501.0624 65.4552 
+L 405.3816 65.4552 
+Q 401.1912 65.4552 401.1912 69.6456 
+L 401.1912 112.9464 
+Q 401.1912 117.1368 405.3816 117.1368 
+z
+" clip-path="url(#p0371174273)" style="fill: #edf2f6; stroke: #365a7a; stroke-width: 1.15; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 405.3816 219.8016 
+L 501.0624 219.8016 
+Q 505.2528 219.8016 505.2528 215.6112 
+L 505.2528 172.3104 
+Q 505.2528 168.12 501.0624 168.12 
+L 405.3816 168.12 
+Q 401.1912 168.12 401.1912 172.3104 
+L 401.1912 215.6112 
+Q 401.1912 219.8016 405.3816 219.8016 
+z
+" clip-path="url(#p0371174273)" style="fill: #f7eeee; stroke: #365a7a; stroke-width: 1.15; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 41.418778 91.296 
+Q 55.132896 91.296 67.72898 91.296 
+" clip-path="url(#p0371174273)" style="fill: none; stroke: #6c7782; stroke-linecap: round"/>
+    <path d="M 63.32898 89.096 
+L 67.72898 91.296 
+L 63.32898 93.496 
+z
+" clip-path="url(#p0371174273)" style="fill: #6c7782; stroke: #6c7782; stroke-linecap: round"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 188.081499 91.296 
+Q 207.033677 91.296 224.867821 91.296 
+" clip-path="url(#p0371174273)" style="fill: none; stroke: #6c7782; stroke-linecap: round"/>
+    <path d="M 220.467821 89.096 
+L 224.867821 91.296 
+L 220.467821 93.496 
+z
+" clip-path="url(#p0371174273)" style="fill: #6c7782; stroke: #6c7782; stroke-linecap: round"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 355.702188 91.296 
+Q 378.144936 91.296 399.46965 91.296 
+" clip-path="url(#p0371174273)" style="fill: none; stroke: #6c7782; stroke-linecap: round"/>
+    <path d="M 395.06965 89.096 
+L 399.46965 91.296 
+L 395.06965 93.496 
+z
+" clip-path="url(#p0371174273)" style="fill: #6c7782; stroke: #6c7782; stroke-linecap: round"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 354.733917 113.961348 
+Q 378.14471 152.756377 400.977855 190.594159 
+" clip-path="url(#p0371174273)" style="fill: none; stroke: #6c7782; stroke-linecap: round"/>
+    <path d="M 400.588142 185.690271 
+L 400.977855 190.594159 
+L 396.820916 187.963597 
+z
+" clip-path="url(#p0371174273)" style="fill: #6c7782; stroke: #6c7782; stroke-linecap: round"/>
+   </g>
+   <g id="text_1">
+    <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle; fill: #172432" x="128.466" y="94.406859" transform="rotate(-0 128.466 94.406859)">pending</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle; fill: #172432" x="290.844" y="94.406859" transform="rotate(-0 290.844 94.406859)">processing</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle; fill: #172432" x="453.222" y="95.720062" transform="rotate(-0 453.222 95.720062)">done</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 13px; font-family: 'Times New Roman'; text-anchor: middle; fill: #172432" x="453.222" y="198.384863" transform="rotate(-0 453.222 198.384863)">failed</text>
+   </g>
+   <g id="text_5">
+    <g id="patch_11">
+     <path d="M 183.842484 76.592525 
+L 230.229516 76.592525 
+L 230.229516 64.095475 
+L 183.842484 64.095475 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-size: 10.5px; font-family: 'Times New Roman'; text-anchor: middle; fill: #172432" x="207.036" y="72.856412" transform="rotate(-0 207.036 72.856412)">nhận khóa</text>
+   </g>
+   <g id="text_6">
+    <g id="patch_12">
+     <path d="M 353.491969 76.592525 
+L 402.796031 76.592525 
+L 402.796031 64.095475 
+L 353.491969 64.095475 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-size: 10.5px; font-family: 'Times New Roman'; text-anchor: middle; fill: #172432" x="378.144" y="72.856412" transform="rotate(-0 378.144 72.856412)">thành công</text>
+   </g>
+   <g id="text_7">
+    <g id="patch_13">
+     <path d="M 388.258063 160.182134 
+L 402.949938 160.182134 
+L 402.949938 145.328266 
+L 388.258063 145.328266 
+z
+" style="fill: #ffffff"/>
+    </g>
+    <text style="font-size: 11px; font-family: 'Times New Roman'; text-anchor: middle; fill: #172432" x="395.604" y="156.26811" transform="rotate(-0 395.604 156.26811)">lỗi</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 12px; font-family: 'Times New Roman'; fill: #6c7782" transform="translate(140.285063 228.40163)">Server chưa có trạng thái canceled.</text>
+    <text style="font-size: 12px; font-family: 'Times New Roman'; fill: #6c7782" transform="translate(108.016313 243.483427)">Restart tiến trình làm mất trạng thái trong RAM.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p0371174273">
+   <rect x="7.992" y="3.996" width="516.816" height="258.408"/>
+  </clipPath>
+ </defs>
+</svg>

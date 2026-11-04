@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="532.8pt" height="41.76pt" viewBox="0 0 532.8 41.76" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-01T11:38:34.335395</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 41.76 
+L 532.8 41.76 
+L 532.8 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="text_1">
+    <!-- $x_c(t)\approx\sum_{k=1}^{4}s_{k,c}(t),\qquad \hat{\mathbf{s}}=f_{\theta}(\mathbf{x})$ -->
+    <g transform="translate(161.68 25.045)">
+     <text>
+      <tspan x="0" y="-0.804688" style="font-style: italic; font-size: 17px; font-family: 'STIXGeneral'">x</tspan>
+      <tspan x="19.257561" y="-0.804688" style="font-style: italic; font-size: 17px; font-family: 'STIXGeneral'">t</tspan>
+      <tspan x="72.234561" y="-0.804688" style="font-style: italic; font-size: 17px; font-family: 'STIXGeneral'">s</tspan>
+      <tspan x="101.195706" y="-0.804688" style="font-style: italic; font-size: 17px; font-family: 'STIXGeneral'">t</tspan>
+      <tspan x="178.290619" y="-0.804688" style="font-style: italic; font-size: 17px; font-family: 'STIXGeneral'">f</tspan>
+      <tspan x="7.547989" y="1.745313" style="font-style: italic; font-size: 11.9px; font-family: 'STIXGeneral'">c</tspan>
+      <tspan x="48.089498" y="14.915625" style="font-style: italic; font-size: 11.9px; font-family: 'STIXGeneral'">k</tspan>
+      <tspan x="78.847552" y="1.745313" style="font-style: italic; font-size: 11.9px; font-family: 'STIXGeneral'">k</tspan>
+      <tspan x="89.486134" y="1.745313" style="font-style: italic; font-size: 11.9px; font-family: 'STIXGeneral'">c</tspan>
+      <tspan x="183.016602" y="1.745313" style="font-style: italic; font-size: 11.9px; font-family: 'STIXGeneral'">θ</tspan>
+      <tspan x="13.596581" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">(</tspan>
+      <tspan x="23.983544" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">)</tspan>
+      <tspan x="33.044524" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">≈</tspan>
+      <tspan x="53.089498" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">∑</tspan>
+      <tspan x="95.534726" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">(</tspan>
+      <tspan x="105.921689" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">)</tspan>
+      <tspan x="111.582669" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">,</tspan>
+      <tspan x="161.448402" y="-2.351562" style="font-size: 17px; font-family: 'STIXGeneral'">̂</tspan>
+      <tspan x="163.245645" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">=</tspan>
+      <tspan x="189.493594" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">(</tspan>
+      <tspan x="203.654559" y="-0.804688" style="font-size: 17px; font-family: 'STIXGeneral'">)</tspan>
+      <tspan x="55.75309" y="14.915625" style="font-size: 11.9px; font-family: 'STIXGeneral'">=</tspan>
+      <tspan x="57.089498" y="-16.960938" style="font-size: 11.9px; font-family: 'STIXGeneral'">4</tspan>
+      <tspan x="66.284572" y="14.915625" style="font-size: 11.9px; font-family: 'STIXGeneral'">1</tspan>
+      <tspan x="84.131145" y="1.745313" style="font-size: 11.9px; font-family: 'STIXGeneral'">,</tspan>
+      <tspan x="153.232654" y="-0.804688" style="font-weight: 700; font-size: 17px; font-family: 'STIXGeneral'">s</tspan>
+      <tspan x="195.154574" y="-0.804688" style="font-weight: 700; font-size: 17px; font-family: 'STIXGeneral'">x</tspan>
+     </text>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

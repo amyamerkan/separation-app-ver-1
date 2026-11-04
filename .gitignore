@@ -11,6 +11,30 @@ venv/
 storage/
 *.jks
 *.keystore
-# Legacy model is distributed through the existing GitHub release.
-/checkpoints/*
-!/checkpoints/README.md
+
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# IDE state and generated Android artifacts
+.idea/
+**/build/
+*.apk
+*.aab
+*.apks
+# Local reports; UI screenshots are maintained with the app documentation.
+/reports/*
+!/reports/ui-preview/
+/DemucsLite_deploy.zip

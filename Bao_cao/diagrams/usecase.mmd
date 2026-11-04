@@ -1,0 +1,20 @@
+flowchart LR
+  U[Người dùng]
+  subgraph SYS[Hệ thống DemucsLite]
+    SEP([Tách nhạc từ tệp])
+    CHECK([Kiểm tra tệp])
+    AI([Phân tách bằng mô hình])
+    STATUS([Theo dõi tác vụ])
+    MIX([Nghe và điều chỉnh âm lượng solo mute])
+    SAVE([Lưu WAV kết quả])
+    CONFIG([Cấu hình server])
+    DEMO([Chạy demo offline])
+    SEP -. include .-> CHECK
+    SEP -. include .-> AI
+  end
+  U --- SEP
+  U --- STATUS
+  U --- MIX
+  U --- SAVE
+  U --- CONFIG
+  U --- DEMO

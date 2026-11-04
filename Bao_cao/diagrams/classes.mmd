@@ -1,0 +1,70 @@
+classDiagram
+  class MainActivity {
+    StudioSession session
+    MediaPlayer[] players
+    play()
+    pause()
+    exportTracks()
+  }
+  class StudioSession {
+    Phase phase
+    Stem[] stems
+    String serverUrl
+    start()
+    cancel()
+    select()
+    setServer()
+  }
+  class Stem {
+    String key
+    File file
+    float[] envelope
+    int volume
+    boolean solo
+    boolean muted
+  }
+  class MainAPI {
+    <<module>>
+    separate_audio()
+    get_status()
+    health_check()
+  }
+  class Pipeline {
+    <<module>>
+    decode_audio()
+    run_separation_pipeline()
+    export_pcm_stems()
+  }
+  class JobStore {
+    dict _jobs
+    create()
+    update()
+    get()
+  }
+  class Job {
+    <<dictionary_record>>
+    status
+    filename
+    created_at
+    updated_at
+    result_urls
+    error
+  }
+  class ModelLoader {
+    <<module>>
+    load_model()
+    get_model()
+  }
+  class CloudStorage {
+    <<module>>
+    upload_folder()
+  }
+  MainActivity --> StudioSession
+  StudioSession --> "0..4" Stem
+  StudioSession ..> MainAPI : HTTP
+  MainAPI ..> Pipeline
+  MainAPI ..> JobStore
+  Pipeline ..> JobStore
+  Pipeline ..> ModelLoader
+  Pipeline ..> CloudStorage
+  JobStore o-- "0..*" Job

@@ -1,0 +1,13 @@
+flowchart TB
+  IN[Waveform B x 2 x T] --> N[Chuẩn hóa chung stereo và padding]
+  N --> E1[Encoder 32] --> E2[Encoder 64] --> E3[Encoder 128 DConv]
+  E3 --> E4[Encoder 256 DConv] --> E5[Encoder 512 DConv]
+  E5 --> L[BiLSTM 2 lớp 256 ẩn mỗi chiều và Linear 512]
+  L --> D5[Decoder 256 DConv] --> D4[Decoder 128 DConv]
+  D4 --> D3[Decoder 64 DConv] --> D2[Decoder 32] --> D1[Decoder 8]
+  E1 -. skip .-> D1
+  E2 -. skip .-> D2
+  E3 -. skip .-> D3
+  E4 -. skip .-> D4
+  E5 -. skip .-> D5
+  D1 --> OUT[Cắt và hoàn nguyên B x 4 x 2 x T]

@@ -1,0 +1,37 @@
+{
+  "format_version": 2,
+  "model_kind": "lite",
+  "model_config": {
+    "sources": [
+      "vocals",
+      "drums",
+      "bass",
+      "other"
+    ],
+    "audio_channels": 2,
+    "sample_rate": 44100,
+    "channels": 32,
+    "depth": 5,
+    "growth": 2.0,
+    "max_channels": 512,
+    "kernel_size": 8,
+    "stride": 4,
+    "lstm_layers": 2,
+    "dconv_depth": 2,
+    "normalize": true,
+    "mixture_consistency": false
+  },
+  "sources": [
+    "vocals",
+    "drums",
+    "bass",
+    "other"
+  ],
+  "sample_rate": 44100,
+  "epoch": 100,
+  "best_snr_db": 3.539064884185791,
+  "selected_weights": "ema",
+  "parameter_entries": 10309704,
+  "actual_size_bytes": 41307935,
+  "actual_sha256": "c8afd78e8f49dfcde538f008345c9bdd64c305d88da9386b50138ebe3b36c5d3"
+}

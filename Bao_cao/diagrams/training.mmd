@@ -1,0 +1,18 @@
+flowchart TB
+  DATA[MUSDB18-HQ] --> AUDIT[Audit và manifest]
+  AUDIT --> TR[86 train]
+  AUDIT --> VA[14 validation]
+  AUDIT --> TE[50 test giữ riêng]
+  TR --> AUG[Crop ngẫu nhiên gain polarity đổi L R remix]
+  AUG --> SUM[Tính mixture từ stem đã biến đổi]
+  SUM --> TRAIN[Forward loss backward AdamW]
+  TRAIN --> EMA[Cập nhật raw và EMA]
+  VA --> FIX[Crop cố định không augmentation]
+  FIX --> VAL[So raw EMA bằng validation SNR]
+  EMA --> VAL
+  VAL --> SCHED[Scheduler và early stopping]
+  VAL --> SAVE[Lưu last best và xuất best_model]
+  SCHED --> TRAIN
+  SAVE --> FREEZE[Cố định checkpoint và cấu hình]
+  FREEZE --> EVAL[Đánh giá full-track SNR SI-SDR]
+  TE --> EVAL

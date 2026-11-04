@@ -1,0 +1,25 @@
+flowchart TB
+  subgraph PHONE[Thiết bị Android]
+    UI[Java XML và MainActivity]
+    SESSION[StudioSession AndroidViewModel]
+    HTTP[OkHttp]
+    CACHE[Cache WAV và MediaPlayer]
+    UI --> SESSION --> HTTP
+    SESSION --> CACHE
+  end
+  subgraph SERVER[Một tiến trình FastAPI và một Uvicorn worker]
+    API[API separate status health]
+    JOB[JobStore dictionary trong RAM]
+    BG[BackgroundTasks và khóa suy luận]
+    DEC[SoundFile hoặc FFmpeg]
+    MODEL[DemucsLite V2 và overlap add]
+    EXP[Xuất 4 WAV PCM16]
+    API --> JOB
+    API --> BG --> DEC --> MODEL --> EXP
+    BG --> JOB
+  end
+  HTTP -->|Upload và polling| API
+  CKPT[Checkpoint epoch 100 EMA] --> MODEL
+  EXP --> LOCAL[Storage local]
+  EXP -. Khả năng mở rộng .-> CLOUD[S3 hoặc GCS]
+  LOCAL -->|Tải WAV| HTTP

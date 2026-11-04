@@ -1,0 +1,4 @@
+﻿source,reported_sdr_mean_db,reported_sdr_median_db,phase_mae_deg,reported_leakage_db,metric_note,provenance
+Vocals,1.854,2.329,31.393,-11.089,Historical SDR label; waveform SNR definition; not confirmed BSS Eval,Progress PDF p14; reported test 50 tracks; not remeasured
+Drums,1.945,1.74,42.673,-20.083,Historical SDR label; waveform SNR definition; not confirmed BSS Eval,Progress PDF p14; reported test 50 tracks; not remeasured
+Bass,0.765,1.828,38.165,-8.554,Historical SDR label; waveform SNR definition; not confirmed BSS Eval,Progress PDF p14; reported test 50 tracks; not remeasured

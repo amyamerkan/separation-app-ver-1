@@ -1,0 +1,4 @@
+﻿model,vocals_db,drums_db,bass_db,other_db,provenance
+Spleeter MWF,6.86,6.71,5.51,4.55,Spleeter paper 2020 comparison table; https://github.com/deezer/spleeter/blob/master/paper.md
+Open-Unmix,6.32,5.73,5.23,4.02,Spleeter paper 2020 comparison table; https://github.com/deezer/spleeter/blob/master/paper.md
+Demucs,7.05,7.08,6.7,4.47,Spleeter paper 2020 comparison table; https://github.com/deezer/spleeter/blob/master/paper.md

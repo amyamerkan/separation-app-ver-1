@@ -1,0 +1,11 @@
+stateDiagram-v2
+  [*] --> pending: upload hợp lệ
+  pending --> processing: nhận khóa suy luận
+  processing --> done: ghi đủ kết quả và URLs
+  processing --> failed: ngoại lệ
+  done --> [*]
+  failed --> [*]
+  note right of processing
+    Chưa có canceled
+    JobStore không bền vững qua restart
+  end note

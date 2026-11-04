@@ -1,0 +1,248 @@
+{
+  "headings": [
+    [
+      1,
+      "CHƯƠNG 1 MỞ ĐẦU"
+    ],
+    [
+      2,
+      "1.1 Bối cảnh và lý do chọn đề tài"
+    ],
+    [
+      2,
+      "1.2 Mục tiêu và câu hỏi nghiên cứu"
+    ],
+    [
+      2,
+      "1.3 Đối tượng và phạm vi"
+    ],
+    [
+      2,
+      "1.4 Phương pháp thực hiện"
+    ],
+    [
+      2,
+      "1.5 Quá trình phát triển và đóng góp"
+    ],
+    [
+      2,
+      "1.6 Bố cục báo cáo"
+    ],
+    [
+      1,
+      "CHƯƠNG 2 CƠ SỞ LÝ THUYẾT VÀ CÁC NGHIÊN CỨU LIÊN QUAN"
+    ],
+    [
+      2,
+      "2.1 Bài toán tách nguồn âm nhạc"
+    ],
+    [
+      2,
+      "2.2 Biểu diễn waveform và phổ thời gian tần số"
+    ],
+    [
+      2,
+      "2.3 U-Net 1D và cơ chế giữ ngữ cảnh"
+    ],
+    [
+      2,
+      "2.4 Dữ liệu MUSDB18-HQ"
+    ],
+    [
+      2,
+      "2.5 Hàm mất mát và quy trình tối ưu"
+    ],
+    [
+      2,
+      "2.6 Chỉ số đánh giá và nguyên tắc so sánh"
+    ],
+    [
+      2,
+      "2.7 Các nghiên cứu liên quan và hướng lựa chọn"
+    ],
+    [
+      1,
+      "CHƯƠNG 3 KIẾN TRÚC HỆ THỐNG VÀ GIẢI PHÁP KỸ THUẬT"
+    ],
+    [
+      2,
+      "3.1 Yêu cầu chức năng và phi chức năng"
+    ],
+    [
+      2,
+      "3.2 Sơ đồ use case và đặc tả luồng chính"
+    ],
+    [
+      2,
+      "3.3 Kiến trúc tổng thể và triển khai"
+    ],
+    [
+      2,
+      "3.4 Trình tự giao tiếp và vòng đời tác vụ"
+    ],
+    [
+      2,
+      "3.5 Cấu trúc lớp và phân chia module"
+    ],
+    [
+      2,
+      "3.6 Kiến trúc DemucsLite V2"
+    ],
+    [
+      2,
+      "3.7 Pipeline dữ liệu và huấn luyện"
+    ],
+    [
+      2,
+      "3.8 Suy luận theo đoạn và xuất âm thanh"
+    ],
+    [
+      2,
+      "3.9 Thiết kế giao diện và playback Android"
+    ],
+    [
+      2,
+      "3.10 Thông số kỹ thuật và giới hạn triển khai"
+    ],
+    [
+      1,
+      "CHƯƠNG 4 KẾT QUẢ THỰC NGHIỆM VÀ ĐÁNH GIÁ"
+    ],
+    [
+      2,
+      "4.1 Thiết kế thực nghiệm và nguồn bằng chứng"
+    ],
+    [
+      2,
+      "4.2 Kết quả phân tách trong báo cáo tuần 4"
+    ],
+    [
+      2,
+      "4.3 Checkpoint V2 và đối chiếu các phiên bản"
+    ],
+    [
+      2,
+      "4.4 Đối chiếu SDR với nghiên cứu công bố"
+    ],
+    [
+      2,
+      "4.5 Hiệu năng và kiểm chứng tích hợp"
+    ],
+    [
+      2,
+      "4.6 Đánh giá chất lượng ứng dụng và hạn chế"
+    ],
+    [
+      2,
+      "4.7 Kế hoạch đánh giá bổ sung và hướng cải tiến"
+    ],
+    [
+      1,
+      "KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN"
+    ],
+    [
+      1,
+      "TÀI LIỆU THAM KHẢO"
+    ],
+    [
+      1,
+      "PHỤ LỤC A TRUY VẾT SỐ LIỆU VÀ CHECKPOINT"
+    ],
+    [
+      1,
+      "PHỤ LỤC B HƯỚNG DẪN SỬ DỤNG VÀ TÁI LẬP"
+    ]
+  ],
+  "figures": [
+    "Hình 3.1 Sơ đồ use case của hệ thống DemucsLite",
+    "Hình 3.2 Kiến trúc triển khai của phiên bản hiện hành",
+    "Hình 3.3 Sơ đồ tuần tự từ chọn tệp đến tải kết quả",
+    "Hình 3.4 Sơ đồ trạng thái tác vụ trên server",
+    "Hình 3.5 Sơ đồ lớp và phụ thuộc module chính",
+    "Hình 3.6 Kiến trúc encoder BiLSTM decoder của DemucsLite V2",
+    "Hình 3.7 Quy trình chuẩn bị dữ liệu huấn luyện và chọn checkpoint",
+    "Hình 3.8 Giao diện chọn tệp và mixer của ứng dụng",
+    "Hình 4.1 So sánh trung bình và trung vị SDR* của ba nguồn ở tuần 4",
+    "Hình 4.2 SDR tham khảo từ bảng công bố của Spleeter năm 2020"
+  ],
+  "tables": [
+    "Bảng 1.1 Tổng hợp các giai đoạn phát triển",
+    "Bảng 2.1 Đối chiếu các hướng kiến trúc",
+    "Bảng 3.1 Yêu cầu chức năng của phiên bản hiện hành",
+    "Bảng 3.2 Hợp đồng API chính",
+    "Bảng 3.3 Kích thước tensor với một crop 6 giây",
+    "Bảng 3.4 Cấu hình mặc định của pipeline huấn luyện V2",
+    "Bảng 3.5 Tổng hợp thông số kỹ thuật hiện hành",
+    "Bảng 4.1 Phạm vi các nhóm kết quả",
+    "Bảng 4.2 Số liệu trích xuất từ thực nghiệm tuần 4",
+    "Bảng 4.3 Thông tin checkpoint V2 đang triển khai",
+    "Bảng 4.4 Đối chiếu kỹ thuật giữa model gốc và V2",
+    "Bảng 4.5 SDR dB trong bảng đối sánh của công trình Spleeter",
+    "Bảng 4.6 Các bằng chứng kiểm thử đã lưu",
+    "Bảng A.1 Các số liệu suy ra bằng phép tính trực tiếp"
+  ],
+  "bookmarks": {
+    "CHƯƠNG 1 MỞ ĐẦU": "h_0",
+    "1.1 Bối cảnh và lý do chọn đề tài": "h_1",
+    "1.2 Mục tiêu và câu hỏi nghiên cứu": "h_2",
+    "1.3 Đối tượng và phạm vi": "h_3",
+    "1.4 Phương pháp thực hiện": "h_4",
+    "1.5 Quá trình phát triển và đóng góp": "h_5",
+    "1.6 Bố cục báo cáo": "h_6",
+    "CHƯƠNG 2 CƠ SỞ LÝ THUYẾT VÀ CÁC NGHIÊN CỨU LIÊN QUAN": "h_7",
+    "2.1 Bài toán tách nguồn âm nhạc": "h_8",
+    "2.2 Biểu diễn waveform và phổ thời gian tần số": "h_9",
+    "2.3 U-Net 1D và cơ chế giữ ngữ cảnh": "h_10",
+    "2.4 Dữ liệu MUSDB18-HQ": "h_11",
+    "2.5 Hàm mất mát và quy trình tối ưu": "h_12",
+    "2.6 Chỉ số đánh giá và nguyên tắc so sánh": "h_13",
+    "2.7 Các nghiên cứu liên quan và hướng lựa chọn": "h_14",
+    "CHƯƠNG 3 KIẾN TRÚC HỆ THỐNG VÀ GIẢI PHÁP KỸ THUẬT": "h_15",
+    "3.1 Yêu cầu chức năng và phi chức năng": "h_16",
+    "3.2 Sơ đồ use case và đặc tả luồng chính": "h_17",
+    "3.3 Kiến trúc tổng thể và triển khai": "h_18",
+    "3.4 Trình tự giao tiếp và vòng đời tác vụ": "h_19",
+    "3.5 Cấu trúc lớp và phân chia module": "h_20",
+    "3.6 Kiến trúc DemucsLite V2": "h_21",
+    "3.7 Pipeline dữ liệu và huấn luyện": "h_22",
+    "3.8 Suy luận theo đoạn và xuất âm thanh": "h_23",
+    "3.9 Thiết kế giao diện và playback Android": "h_24",
+    "3.10 Thông số kỹ thuật và giới hạn triển khai": "h_25",
+    "CHƯƠNG 4 KẾT QUẢ THỰC NGHIỆM VÀ ĐÁNH GIÁ": "h_26",
+    "4.1 Thiết kế thực nghiệm và nguồn bằng chứng": "h_27",
+    "4.2 Kết quả phân tách trong báo cáo tuần 4": "h_28",
+    "4.3 Checkpoint V2 và đối chiếu các phiên bản": "h_29",
+    "4.4 Đối chiếu SDR với nghiên cứu công bố": "h_30",
+    "4.5 Hiệu năng và kiểm chứng tích hợp": "h_31",
+    "4.6 Đánh giá chất lượng ứng dụng và hạn chế": "h_32",
+    "4.7 Kế hoạch đánh giá bổ sung và hướng cải tiến": "h_33",
+    "KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN": "h_34",
+    "TÀI LIỆU THAM KHẢO": "h_35",
+    "PHỤ LỤC A TRUY VẾT SỐ LIỆU VÀ CHECKPOINT": "h_36",
+    "PHỤ LỤC B HƯỚNG DẪN SỬ DỤNG VÀ TÁI LẬP": "h_37",
+    "Hình 3.1 Sơ đồ use case của hệ thống DemucsLite": "f_0",
+    "Hình 3.2 Kiến trúc triển khai của phiên bản hiện hành": "f_1",
+    "Hình 3.3 Sơ đồ tuần tự từ chọn tệp đến tải kết quả": "f_2",
+    "Hình 3.4 Sơ đồ trạng thái tác vụ trên server": "f_3",
+    "Hình 3.5 Sơ đồ lớp và phụ thuộc module chính": "f_4",
+    "Hình 3.6 Kiến trúc encoder BiLSTM decoder của DemucsLite V2": "f_5",
+    "Hình 3.7 Quy trình chuẩn bị dữ liệu huấn luyện và chọn checkpoint": "f_6",
+    "Hình 3.8 Giao diện chọn tệp và mixer của ứng dụng": "f_7",
+    "Hình 4.1 So sánh trung bình và trung vị SDR* của ba nguồn ở tuần 4": "f_8",
+    "Hình 4.2 SDR tham khảo từ bảng công bố của Spleeter năm 2020": "f_9",
+    "Bảng 1.1 Tổng hợp các giai đoạn phát triển": "t_0",
+    "Bảng 2.1 Đối chiếu các hướng kiến trúc": "t_1",
+    "Bảng 3.1 Yêu cầu chức năng của phiên bản hiện hành": "t_2",
+    "Bảng 3.2 Hợp đồng API chính": "t_3",
+    "Bảng 3.3 Kích thước tensor với một crop 6 giây": "t_4",
+    "Bảng 3.4 Cấu hình mặc định của pipeline huấn luyện V2": "t_5",
+    "Bảng 3.5 Tổng hợp thông số kỹ thuật hiện hành": "t_6",
+    "Bảng 4.1 Phạm vi các nhóm kết quả": "t_7",
+    "Bảng 4.2 Số liệu trích xuất từ thực nghiệm tuần 4": "t_8",
+    "Bảng 4.3 Thông tin checkpoint V2 đang triển khai": "t_9",
+    "Bảng 4.4 Đối chiếu kỹ thuật giữa model gốc và V2": "t_10",
+    "Bảng 4.5 SDR dB trong bảng đối sánh của công trình Spleeter": "t_11",
+    "Bảng 4.6 Các bằng chứng kiểm thử đã lưu": "t_12",
+    "Bảng A.1 Các số liệu suy ra bằng phép tính trực tiếp": "t_13"
+  }
+}
