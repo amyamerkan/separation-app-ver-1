@@ -38,3 +38,12 @@ local.properties
 /reports/*
 !/reports/ui-preview/
 /DemucsLite_deploy.zip
+
+.env
+*.pth
+**/checkpoints/
+**/__pycache__/
+*.pyc
+app/build/
+.gradle/
+.idea/

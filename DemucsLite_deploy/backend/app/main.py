@@ -1,73 +1,84 @@
-"""Music separation API. Use one Uvicorn worker for the in-memory job store."""
-import logging
 import uuid
+import shutil
+import traceback
 from contextlib import asynccontextmanager
-from pathlib import Path
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query
+from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
+from app.job_store import job_store
+from app.model_loader import get_model
+from app.pipeline import process_separation_job
 
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException, Request
-from fastapi.staticfiles import StaticFiles
-
-from app.config import UPLOAD_DIR, RESULT_DIR, ALLOWED_EXTENSIONS, MAX_UPLOAD_MB, STORAGE_BACKEND, PUBLIC_BASE_URL
-from app.model_loader import load_model, get_model_info
-from app.job_store import job_store, JobStatus
-from app.pipeline import run_separation_pipeline
-
-logger = logging.getLogger("uvicorn.error")
-
+MODEL_LOAD_ERROR: str | None = None
 
 @asynccontextmanager
-async def lifespan(application):
-    load_model()
+async def lifespan(app: FastAPI):
+    global MODEL_LOAD_ERROR
+    try:
+        get_model()
+        MODEL_LOAD_ERROR = None
+    except Exception:
+        MODEL_LOAD_ERROR = traceback.format_exc()
     yield
 
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    lifespan=lifespan,
+)
 
-app = FastAPI(title="Music Source Separation API", version="2.0.0", lifespan=lifespan)
-if STORAGE_BACKEND == "local":
-    app.mount("/files", StaticFiles(directory=str(RESULT_DIR)), name="files")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 def health_check():
-    model = get_model_info()
-    return {"status": "ok" if model["ready"] else "starting", **model}
-
+    return {
+        "status": "ok" if MODEL_LOAD_ERROR is None else "model_error",
+        "device": settings.DEVICE,
+        "hf_repo": settings.HF_MODEL_REPO,
+        "azure_container": settings.AZURE_CONTAINER_NAME,
+        "model_error": MODEL_LOAD_ERROR,
+    }
 
 @app.post("/separate")
-async def separate_audio(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
-    ext = Path(file.filename or "").suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        await file.close()
-        raise HTTPException(400, f"Unsupported extension '{ext}'. Allowed: {sorted(ALLOWED_EXTENSIONS)}")
-    if not get_model_info().get("ready"):
-        await file.close()
-        raise HTTPException(503, "Model is not ready.")
-    job_id = str(uuid.uuid4())
-    input_path = UPLOAD_DIR / f"{job_id}{ext}"
-    size = 0
-    try:
-        with input_path.open("wb") as destination:
-            while chunk := await file.read(1024 * 1024):
-                size += len(chunk)
-                if size > MAX_UPLOAD_MB * 1024 * 1024:
-                    raise HTTPException(413, f"File exceeds the {MAX_UPLOAD_MB} MB upload limit.")
-                destination.write(chunk)
-        if not size:
-            raise HTTPException(400, "The uploaded file is empty.")
-    except Exception:
-        input_path.unlink(missing_ok=True)
-        raise
-    finally:
-        await file.close()
-    job_store.create(job_id, filename=file.filename)
-    origin = PUBLIC_BASE_URL or str(request.base_url).rstrip("/")
-    background_tasks.add_task(run_separation_pipeline, job_id, str(input_path), public_base_url=origin)
-    logger.info("Accepted job=%s, bytes=%s", job_id, size)
-    return {"job_id": job_id, "status": JobStatus.PENDING}
+@app.post("/api/separate")
+async def separate_audio_endpoint(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    wait: bool = Query(False),
+):
+    if MODEL_LOAD_ERROR is not None:
+        raise HTTPException(status_code=500, detail=f"Model chưa sẵn sàng: {MODEL_LOAD_ERROR}")
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="File tải lên không hợp lệ")
 
+    job_id = str(uuid.uuid4())
+    job_dir = settings.WORK_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+
+    ext = "." + file.filename.split(".")[-1] if "." in file.filename else ".wav"
+    local_input_path = job_dir / f"input{ext}"
+
+    with open(local_input_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    job_store.create_job(job_id=job_id, filename=file.filename)
+
+    if wait:
+        return process_separation_job(job_id, local_input_path, file.filename)
+    background_tasks.add_task(process_separation_job, job_id, local_input_path, file.filename)
+    return job_store.get_job(job_id)
 
 @app.get("/status/{job_id}")
-async def get_status(job_id: str):
-    job = job_store.get(job_id)
-    if job is None:
-        raise HTTPException(404, "Job ID was not found.")
+@app.get("/jobs/{job_id}")
+@app.get("/api/jobs/{job_id}")
+def get_job_status(job_id: str):
+    job = job_store.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Không tìm thấy mã xử lý này")
     return job

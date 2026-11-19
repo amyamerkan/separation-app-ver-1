@@ -5,7 +5,6 @@
         <ImageButton android:id="@+id/btnBack" style="@style/IconButton" android:layout_width="44dp" android:layout_height="44dp" android:src="@drawable/ic_arrow_left" android:contentDescription="@string/ui_a11y_btnback" android:visibility="gone" />
         <ImageView android:id="@+id/brandIcon" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_brand" android:importantForAccessibility="no" />
         <TextView android:id="@+id/toolbarTitle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="10dp" android:text="@string/ui_toolbartitle" android:textColor="@color/paper" android:textSize="20sp" android:fontFamily="sans-serif-medium" android:letterSpacing="-0.035" />
-        <ImageButton android:id="@+id/btnSettings" style="@style/IconButton" android:layout_width="44dp" android:layout_height="44dp" android:src="@drawable/ic_settings" android:contentDescription="@string/ui_a11y_btnsettings" />
     </LinearLayout>
     <FrameLayout android:id="@+id/screenContainer" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
         <include android:id="@+id/screenHome" layout="@layout/screen_home" />

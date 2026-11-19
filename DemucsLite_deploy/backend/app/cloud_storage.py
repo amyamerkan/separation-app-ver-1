@@ -1,99 +1,83 @@
-"""
-Lớp trừu tượng lưu trữ file kết quả sau khi tách nhạc và sinh download link.
-
-Hỗ trợ 3 backend, chọn qua biến môi trường STORAGE_BACKEND:
-  - "local": phục vụ file tĩnh ngay từ FastAPI (app/main.py mount /files).
-             Không cần tài khoản cloud -> dùng để chạy demo / nộp bài ngay.
-  - "s3"   : đẩy lên AWS S3, sinh presigned URL có thời hạn.
-  - "gcs"  : đẩy lên Google Cloud Storage, sinh signed URL có thời hạn.
-
-Mỗi hàm upload_folder() nhận job_id + thư mục local chứa các file .wav đã tách,
-trả về dict {tên_file: url_tải_về}.
-"""
-import os
-import logging
+import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict
-
-from app.config import (
-    STORAGE_BACKEND,
-    S3_BUCKET,
-    S3_REGION,
-    S3_PRESIGNED_EXPIRE_SECONDS,
-    GCS_BUCKET,
-    GCS_PRESIGNED_EXPIRE_SECONDS,
-    PUBLIC_BASE_URL,
+from typing import Any
+from azure.storage.blob import (
+    BlobServiceClient,
+    BlobSasPermissions,
+    ContentSettings,
+    generate_blob_sas,
 )
+from app.config import settings
 
-logger = logging.getLogger("uvicorn.error")
+class AzureBlobStorage:
+    def __init__(self) -> None:
+        if not settings.AZURE_STORAGE_CONNECTION_STRING:
+            raise ValueError("Thiếu biến môi trường AZURE_STORAGE_CONNECTION_STRING")
 
-
-def upload_folder(job_id: str, local_dir: Path, public_base_url=None) -> Dict[str, str]:
-    if STORAGE_BACKEND == "s3":
-        return _upload_s3(job_id, local_dir)
-    if STORAGE_BACKEND == "gcs":
-        return _upload_gcs(job_id, local_dir)
-    return _upload_local(job_id, local_dir, public_base_url)
-
-
-# ---------------------------------------------------------------------------
-# Backend: local (không cần cloud, phục vụ file qua chính API)
-# ---------------------------------------------------------------------------
-def _upload_local(job_id: str, local_dir: Path, public_base_url=None) -> Dict[str, str]:
-    urls = {}
-    origin = (public_base_url or PUBLIC_BASE_URL or "http://localhost:8000").rstrip("/")
-    for f in sorted(local_dir.glob("*.wav")):
-        # File đã nằm sẵn trong storage/results/<job_id>/, chỉ cần build URL
-        # tương ứng với route static đã mount trong app/main.py (/files/...)
-        urls[f.name] = f"{origin}/files/{job_id}/{f.name}"
-    logger.info(f"[cloud_storage] (local) {len(urls)} file sẵn sàng cho job {job_id}")
-    return urls
-
-
-# ---------------------------------------------------------------------------
-# Backend: AWS S3
-# ---------------------------------------------------------------------------
-def _upload_s3(job_id: str, local_dir: Path) -> Dict[str, str]:
-    import boto3
-    from botocore.config import Config
-
-    if not S3_BUCKET:
-        raise RuntimeError("Thiếu biến môi trường S3_BUCKET")
-
-    s3 = boto3.client("s3", region_name=S3_REGION, config=Config(signature_version="s3v4"))
-    urls = {}
-    for f in sorted(local_dir.glob("*.wav")):
-        key = f"results/{job_id}/{f.name}"
-        s3.upload_file(str(f), S3_BUCKET, key)
-        urls[f.name] = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": S3_BUCKET, "Key": key},
-            ExpiresIn=S3_PRESIGNED_EXPIRE_SECONDS,
+        self.client = BlobServiceClient.from_connection_string(
+            settings.AZURE_STORAGE_CONNECTION_STRING
         )
-    logger.info(f"[cloud_storage] (s3) Đã upload {len(urls)} file lên bucket {S3_BUCKET}")
-    return urls
+        self.container_name = settings.AZURE_CONTAINER_NAME
+        self._ensure_container()
 
+    def _ensure_container(self) -> None:
+        container_client = self.client.get_container_client(self.container_name)
+        if not container_client.exists():
+            container_client.create_container()
 
-# ---------------------------------------------------------------------------
-# Backend: Google Cloud Storage
-# ---------------------------------------------------------------------------
-def _upload_gcs(job_id: str, local_dir: Path) -> Dict[str, str]:
-    from google.cloud import storage
-    import datetime
-
-    if not GCS_BUCKET:
-        raise RuntimeError("Thiếu biến môi trường GCS_BUCKET")
-
-    client = storage.Client()
-    bucket = client.bucket(GCS_BUCKET)
-    urls = {}
-    for f in sorted(local_dir.glob("*.wav")):
-        blob_name = f"results/{job_id}/{f.name}"
-        blob = bucket.blob(blob_name)
-        blob.upload_from_filename(str(f))
-        urls[f.name] = blob.generate_signed_url(
-            expiration=datetime.timedelta(seconds=GCS_PRESIGNED_EXPIRE_SECONDS),
-            method="GET",
+    def upload_file_and_get_sas(
+        self,
+        local_path: Path,
+        blob_path: str,
+        content_type: str = "audio/wav",
+    ) -> str:
+        blob_client = self.client.get_blob_client(
+            container=self.container_name, blob=blob_path
         )
-    logger.info(f"[cloud_storage] (gcs) Đã upload {len(urls)} file lên bucket {GCS_BUCKET}")
-    return urls
+        with open(local_path, "rb") as f:
+            blob_client.upload_blob(
+                f,
+                overwrite=True,
+                content_settings=ContentSettings(content_type=content_type),
+            )
+
+        sas_token = generate_blob_sas(
+            account_name=self.client.account_name,
+            container_name=self.container_name,
+            blob_name=blob_path,
+            account_key=self.client.credential.account_key,
+            permission=BlobSasPermissions(read=True),
+            expiry=datetime.now(timezone.utc) + timedelta(hours=settings.AZURE_SAS_EXPIRY_HOURS),
+        )
+        return f"{blob_client.url}?{sas_token}"
+
+    def save_job_state(self, job_id: str, data: dict[str, Any]) -> None:
+        blob_path = f"jobs/{job_id}/status.json"
+        blob_client = self.client.get_blob_client(
+            container=self.container_name, blob=blob_path
+        )
+        payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        blob_client.upload_blob(
+            payload,
+            overwrite=True,
+            content_settings=ContentSettings(content_type="application/json"),
+        )
+
+    def load_job_state(self, job_id: str) -> dict[str, Any] | None:
+        blob_path = f"jobs/{job_id}/status.json"
+        blob_client = self.client.get_blob_client(
+            container=self.container_name, blob=blob_path
+        )
+        if not blob_client.exists():
+            return None
+        raw = blob_client.download_blob().readall()
+        return json.loads(raw.decode("utf-8"))
+
+_storage_instance: AzureBlobStorage | None = None
+
+def get_storage() -> AzureBlobStorage:
+    global _storage_instance
+    if _storage_instance is None:
+        _storage_instance = AzureBlobStorage()
+    return _storage_instance

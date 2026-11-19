@@ -1,53 +1,46 @@
-"""
-Lưu trạng thái job xử lý tách nhạc.
-
-Bản demo dùng dict trong bộ nhớ (đủ cho 1 tiến trình/1 worker).
-Khi triển khai thật với nhiều worker (uvicorn --workers > 1, hoặc scale ngang),
-hãy thay JobStore này bằng Redis (redis-py) để mọi worker đọc/ghi chung một
-nguồn trạng thái. Interface (get/set) được giữ nguyên nên chỉ cần đổi phần
-implement bên trong, không cần sửa các nơi gọi.
-"""
-from enum import Enum
-from typing import Optional, Dict, Any
-import threading
-import time
-
-
-class JobStatus(str, Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    DONE = "done"
-    FAILED = "failed"
-
+from datetime import datetime, timezone
+from typing import Any
+from app.cloud_storage import get_storage
 
 class JobStore:
-    def __init__(self):
-        self._lock = threading.Lock()
-        self._jobs: Dict[str, Dict[str, Any]] = {}
+    def __init__(self) -> None:
+        self._memory_cache: dict[str, dict[str, Any]] = {}
 
-    def create(self, job_id: str, filename: str):
-        with self._lock:
-            self._jobs[job_id] = {
-                "status": JobStatus.PENDING,
-                "filename": filename,
-                "created_at": time.time(),
-                "updated_at": time.time(),
-                "result_urls": None,
-                "error": None,
-            }
+    def create_job(self, job_id: str, filename: str) -> dict[str, Any]:
+        now = datetime.now(timezone.utc).isoformat()
+        job_data = {
+            "job_id": job_id,
+            "filename": filename,
+            "status": "pending",
+            "progress": 0,
+            "created_at": now,
+            "updated_at": now,
+            "input_url": None,
+            "stems": {},
+            "error": None,
+        }
+        self._memory_cache[job_id] = job_data
+        get_storage().save_job_state(job_id, job_data)
+        return job_data
 
-    def update(self, job_id: str, **fields):
-        with self._lock:
-            if job_id not in self._jobs:
-                return
-            self._jobs[job_id].update(fields)
-            self._jobs[job_id]["updated_at"] = time.time()
+    def update_job(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
+        job_data = self.get_job(job_id)
+        if not job_data:
+            raise KeyError(f"Không tìm thấy job {job_id}")
+        
+        job_data.update(kwargs)
+        job_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        self._memory_cache[job_id] = job_data
+        get_storage().save_job_state(job_id, job_data)
+        return job_data
 
-    def get(self, job_id: str) -> Optional[Dict[str, Any]]:
-        with self._lock:
-            job = self._jobs.get(job_id)
-            return dict(job) if job else None
+    def get_job(self, job_id: str) -> dict[str, Any] | None:
+        if job_id in self._memory_cache:
+            return self._memory_cache[job_id]
+        
+        remote_data = get_storage().load_job_state(job_id)
+        if remote_data:
+            self._memory_cache[job_id] = remote_data
+        return remote_data
 
-
-# Singleton dùng chung toàn app
 job_store = JobStore()

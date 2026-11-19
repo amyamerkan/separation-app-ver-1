@@ -1,94 +1,100 @@
-"""Decode, separate overlapping chunks, and export Android-compatible WAV files."""
-import logging
 import shutil
 import subprocess
-import threading
 from pathlib import Path
-
+from typing import Any
 import numpy as np
 import soundfile as sf
 import torch
+from app.config import settings
+from app.cloud_storage import get_storage
+from app.job_store import job_store
+from app.model_loader import get_model
+from audio_sep.inference import load_audio, overlap_add
 
-from app.config import RESULT_DIR, FFMPEG_BINARY, INFERENCE_SEGMENT_SECONDS, INFERENCE_OVERLAP
-from app.model_loader import get_model, get_device, get_model_info
-from app.job_store import job_store, JobStatus
-from app.cloud_storage import upload_folder
-from audio_sep.inference import overlap_add
+def _decode_to_wav(src_path: Path, dst_path: Path, sample_rate: int) -> Path:
+    """Dùng ffmpeg chuẩn hóa mp3/m4a/flac/wav sang WAV Stereo để load_audio đọc an toàn."""
+    cmd = [
+        "ffmpeg", "-y", "-i", str(src_path),
+        "-ac", "2", "-ar", str(sample_rate),
+        "-c:a", "pcm_f32le", str(dst_path),
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"Lỗi giải mã audio bằng ffmpeg: {proc.stderr[-300:]}")
+    return dst_path
 
-logger = logging.getLogger("uvicorn.error")
-_inference_lock = threading.Lock()
-SAMPLE_RATE = 44100
+def process_separation_job(job_id: str, local_input_path: Path, original_filename: str) -> dict[str, Any]:
+    job_dir = settings.WORK_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+    storage = get_storage()
 
-
-def decode_audio(path):
-    """Keep full-song buffers on CPU. FFmpeg handles codecs and resampling."""
     try:
-        data, sample_rate = sf.read(str(path), dtype="float32", always_2d=True)
-    except (RuntimeError, ValueError, OSError):
-        data, sample_rate = None, None
-    if data is not None and sample_rate == SAMPLE_RATE and data.shape[1] in (1, 2):
-        if data.shape[1] == 1:
-            data = np.repeat(data, 2, axis=1)
-    else:
-        command = [FFMPEG_BINARY, "-nostdin", "-hide_banner", "-loglevel", "error",
-                   "-i", str(path), "-vn", "-f", "f32le", "-acodec", "pcm_f32le",
-                   "-ar", str(SAMPLE_RATE), "-ac", "2", "pipe:1"]
-        try:
-            decoded = subprocess.run(command, check=True, capture_output=True, timeout=300)
-        except FileNotFoundError as error:
-            raise RuntimeError("FFmpeg is required for MP3/M4A decoding and resampling.") from error
-        except subprocess.TimeoutExpired as error:
-            raise ValueError("Audio decoding exceeded 300 seconds.") from error
-        except subprocess.CalledProcessError as error:
-            detail = (error.stderr or b"").decode("utf-8", errors="replace")[-1000:]
-            raise ValueError(f"Cannot decode the uploaded audio: {detail}") from error
-        if len(decoded.stdout) % 8:
-            raise ValueError("FFmpeg returned an incomplete stereo audio frame.")
-        data = np.frombuffer(decoded.stdout, dtype="<f4").reshape(-1, 2)
-    if not data.size or not np.isfinite(data).all():
-        raise ValueError("Audio must contain nonempty, finite samples.")
-    return torch.from_numpy(np.ascontiguousarray(data.T)).float()
+        job_store.update_job(job_id, status="processing", progress=10)
 
+        # 1. Lưu file nhạc gốc lên Azure Blob Storage
+        ext = local_input_path.suffix.lower() or ".wav"
+        content_types = {
+            ".mp3": "audio/mpeg",
+            ".wav": "audio/wav",
+            ".flac": "audio/flac",
+            ".m4a": "audio/mp4",
+        }
+        input_blob_path = f"uploads/{job_id}/original{ext}"
+        input_sas_url = storage.upload_file_and_get_sas(
+            local_path=local_input_path,
+            blob_path=input_blob_path,
+            content_type=content_types.get(ext, "application/octet-stream"),
+        )
+        job_store.update_job(job_id, input_url=input_sas_url, progress=25)
 
-def export_pcm_stems(estimates, directory, sources):
-    """Apply one shared headroom gain only if a stem exceeds PCM full scale."""
-    if estimates.ndim != 3 or estimates.shape[0] != len(sources) or estimates.shape[1] != 2 or not estimates.shape[-1]:
-        raise ValueError("Expected nonempty [sources, 2, samples] model estimates.")
-    if not torch.isfinite(estimates).all():
-        raise ValueError("Model produced nonfinite audio.")
-    directory = Path(directory)
-    directory.mkdir(parents=True, exist_ok=True)
-    peak = float(estimates.abs().max())
-    gain = ((32767 / 32768) / peak) if peak > 1 else 1.0
-    for source, estimate in zip(sources, estimates):
-        if source not in {"vocals", "drums", "bass", "other"}:
-            raise ValueError("Unexpected source name.")
-        sf.write(str(directory / f"{source}.wav"), (estimate.detach().cpu() * gain).numpy().T,
-                 SAMPLE_RATE, subtype="PCM_16")
-    return gain
+        # 2. Giải mã và chuẩn hóa tần số lấy mẫu khớp với model
+        model = get_model()
+        target_sr = getattr(model, "samplerate", settings.SAMPLE_RATE)
+        decoded_wav = _decode_to_wav(local_input_path, job_dir / "decoded.wav", target_sr)
+        wav = load_audio(decoded_wav, sample_rate=target_sr)
 
+        # 3. Tách 4 stems bằng overlap_add trên GPU
+        job_store.update_job(job_id, status="processing", progress=45)
+        estimates = overlap_add(
+            model=model,
+            mixture=wav,
+            segment_seconds=settings.SEGMENT_SECONDS,
+            overlap=settings.OVERLAP,
+            device=settings.DEVICE,
+        )
+        if not torch.isfinite(estimates).all():
+            raise ValueError("Kết quả tách từ model chứa giá trị không hợp lệ (NaN/Inf).")
+        job_store.update_job(job_id, status="processing", progress=80)
 
-def run_separation_pipeline(job_id: str, input_path: str, public_base_url=None):
-    output_dir = RESULT_DIR / job_id
-    try:
-        # Each background task waits its turn; GPU/CPU inference has one owner.
-        with _inference_lock:
-            job_store.update(job_id, status=JobStatus.PROCESSING)
-            model = get_model()
-            mixture = decode_audio(input_path)
-            configured = INFERENCE_SEGMENT_SECONDS
-            segment = float(configured) if configured else (10.0 if get_model_info().get("model_kind") == "legacy_lite" else 6.0)
-            if segment <= 0:
-                raise ValueError("INFERENCE_SEGMENT_SECONDS must be positive.")
-            estimates = overlap_add(model, mixture, segment_seconds=segment,
-                                    overlap=INFERENCE_OVERLAP, device=get_device())
-            gain = export_pcm_stems(estimates, output_dir, model.sources)
-            result_urls = upload_folder(job_id, output_dir, public_base_url=public_base_url)
-            job_store.update(job_id, status=JobStatus.DONE, result_urls=result_urls)
-            logger.info("Separation complete: job=%s, sources=%s, common_output_gain=%.6f", job_id, model.sources, gain)
-    except Exception as error:
-        logger.exception("Separation failed: job=%s", job_id)
-        shutil.rmtree(output_dir, ignore_errors=True)
-        job_store.update(job_id, status=JobStatus.FAILED, error=str(error))
+        # 4. Xuất 4 file WAV theo đúng thứ tự model.sources và đẩy lên Azure Blob
+        stem_urls: dict[str, str] = {}
+        for stem_name, stem_tensor in zip(model.sources, estimates):
+            stem_local_path = job_dir / f"{stem_name}.wav"
+            audio_np = np.clip(stem_tensor.detach().cpu().numpy().T, -1.0, 1.0)
+            sf.write(str(stem_local_path), audio_np, target_sr, subtype="PCM_16")
+
+            blob_stem_path = f"outputs/{job_id}/{stem_name}.wav"
+            stem_urls[stem_name] = storage.upload_file_and_get_sas(
+                local_path=stem_local_path,
+                blob_path=blob_stem_path,
+                content_type="audio/wav",
+            )
+
+        # 5. Hoàn tất với status="done" khớp với StudioSession.java
+        return job_store.update_job(
+            job_id,
+            status="done",
+            progress=100,
+            stems=stem_urls,
+            result_urls=stem_urls,
+        )
+
+    except Exception as exc:
+        job_store.update_job(
+            job_id,
+            status="failed",
+            error=str(exc),
+        )
+        raise
     finally:
-        Path(input_path).unlink(missing_ok=True)
+        shutil.rmtree(job_dir, ignore_errors=True)

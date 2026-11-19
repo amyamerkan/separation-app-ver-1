@@ -117,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.uploadZone).setOnClickListener(v -> picker.launch(new String[]{"audio/*"}));
         findViewById(R.id.btnRemoveFile).setOnClickListener(v -> session.select(null,"",-1));
         findViewById(R.id.btnSeparate).setOnClickListener(v -> startJob(false));
-        findViewById(R.id.btnSettings).setOnClickListener(v -> showSettings());
         findViewById(R.id.btnBack).setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
         findViewById(R.id.btnCancel).setOnClickListener(v -> confirmCancel());
         findViewById(R.id.navHome).setOnClickListener(v -> { pause();display(Screen.HOME,true); });
@@ -244,7 +243,6 @@ public class MainActivity extends AppCompatActivity {
         boolean home=screen==Screen.HOME;
         findViewById(R.id.btnBack).setVisibility(home?View.GONE:View.VISIBLE);
         findViewById(R.id.brandIcon).setVisibility(home?View.VISIBLE:View.GONE);
-        findViewById(R.id.btnSettings).setVisibility(screen==Screen.PROCESSING?View.GONE:View.VISIBLE);
         findViewById(R.id.bottomNav).setVisibility(screen==Screen.PROCESSING?View.GONE:View.VISIBLE);
         text(R.id.toolbarTitle,home?"demucs lite":screen==Screen.UPLOAD?"Thêm bài hát":screen==Screen.PROCESSING?"Phòng tách âm":"Mix studio");
         TextView homeNav=findViewById(R.id.navHome),studioNav=findViewById(R.id.navStudio);
@@ -422,26 +420,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showSettings() {
-        EditText input=new EditText(this);input.setSingleLine();input.setText(session.serverUrl);
-        input.setSelectAllOnFocus(true);input.setTextSize(14);
-        input.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
-        int padding=(int)(24*getResources().getDisplayMetrics().density);
-        android.widget.LinearLayout box=new android.widget.LinearLayout(this);box.setPadding(padding,0,padding,0);box.addView(input,new android.widget.LinearLayout.LayoutParams(-1,Math.round(56*getResources().getDisplayMetrics().density)));
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Kết nối máy chủ")
-                .setMessage("Emulator: http://10.0.2.2:8000\nĐiện thoại: nhập IP LAN của máy chạy server.\nChỉ nhập địa chỉ gốc, không thêm /separate.")
-                .setView(box).setNegativeButton("Đóng",null).setPositiveButton("Lưu",null).create();
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String value=input.getText().toString().trim().replaceAll("/+$","");Uri uri=Uri.parse(value);
-            if(!("http".equals(uri.getScheme())||"https".equals(uri.getScheme()))||uri.getHost()==null
-                    ||uri.getQuery()!=null||uri.getFragment()!=null||uri.getUserInfo()!=null
-                    ||(uri.getPath()!=null&&!uri.getPath().isEmpty())) {
-                input.setError("Nhập địa chỉ gốc hợp lệ, ví dụ http://10.0.2.2:8000");return;
-            }
-            session.setServer(value);dialog.dismiss();toast("Đã lưu địa chỉ máy chủ.");
-        }));
-        dialog.show();
-    }
     private void confirmCancel() {
         if(!session.isBusy()) { display(Screen.UPLOAD,true);return; }
         new AlertDialog.Builder(this).setTitle("Dừng chờ xử lý?")
